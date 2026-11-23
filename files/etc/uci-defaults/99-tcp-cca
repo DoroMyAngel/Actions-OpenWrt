@@ -1,0 +1,6 @@
+#!/bin/sh
+# Set BBR as the default TCP congestion control algorithm.
+# turboacc's firewall4 integration reads firewall.defaults.tcpcca.
+uci -q set firewall.@defaults[0].tcpcca='bbr'
+uci -q commit firewall
+exit 0
