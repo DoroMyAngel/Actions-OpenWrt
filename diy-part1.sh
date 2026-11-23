@@ -12,6 +12,6 @@ curl -fsSL "${INSTALLER_URL}" -o /tmp/add_turboacc.sh
 
 # The upstream installer clones the moving main branch internally.
 # Pin that clone to the exact commit used for this build.
-sed -i 's@^git clone --depth=1 --single-branch https://github.com/mufeng05/turboacc "\$TMPDIR/turboacc" || exit 1$@git clone --depth=1 https://github.com/mufeng05/turboacc "\$TMPDIR/turboacc" || exit 1\n git -C "\$TMPDIR/turboacc" checkout ${TURBOACC_COMMIT}@' /tmp/add_turboacc.sh
+sed -i 's@^git clone --depth=1 --single-branch https://github.com/mufeng05/turboacc "\$TMPDIR/turboacc" || exit 1$@git clone --depth=1 https://github.com/mufeng05/turboacc "\$TMPDIR/turboacc" || exit 1\n git -C "\$TMPDIR/turboacc" checkout ${TURBOACC_COMMIT} || exit 1@' /tmp/add_turboacc.sh
 
 bash /tmp/add_turboacc.sh
