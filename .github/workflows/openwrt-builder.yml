@@ -93,6 +93,8 @@ jobs:
         grep -q '^CONFIG_PACKAGE_luci-app-turboacc=y' .config
         grep -q '^CONFIG_PACKAGE_kmod-nft-fullcone=y' .config
         grep -q '^CONFIG_PACKAGE_kmod-tcp-bbr=y' .config
+        grep -q '^CONFIG_KERNEL_DEBUG_INFO_BTF=y' .config
+        grep -q '^CONFIG_KERNEL_XDP_SOCKETS=y' .config
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
