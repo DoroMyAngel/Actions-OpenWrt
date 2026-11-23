@@ -12,6 +12,7 @@
 - LuCI：包含 Web 管理界面
 - Full Cone NAT：turboacc 的 fw4 兼容模式（`firewall.defaults.fullcone=1`，使用 `nft_fullcone` 模块）
 - TCP 拥塞控制：编入 CUBIC 与 BBR，首次启动默认 BBR
+- dae/daed eBPF 基础：内核内置 BTF（`CONFIG_KERNEL_DEBUG_INFO_BTF`）和 XDP sockets；BTF 由构建链的 pahole/dwarves 生成
 - 流量卸载：Linux 原生软件 Flow Offloading
 - 不启用：SFE、Fast Classifier、Broadcom Fullcone 模式
 - 不添加 helloworld 等额外第三方 feeds
