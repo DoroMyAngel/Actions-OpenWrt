@@ -1,18 +1,17 @@
 #!/bin/bash
 #
-# https://github.com/P3TERX/Actions-OpenWrt
-# File name: diy-part1.sh
-# Description: OpenWrt DIY script part 1 (Before Update feeds)
+# Official OpenWrt 25.12.6 + turboacc Full Cone (fw4 compatibility mode)
+# turboacc source is pinned to a reviewed commit for reproducible builds.
 #
-# Copyright (c) 2019-2024 P3TERX <https://p3terx.com>
-#
-# This is free software, licensed under the MIT License.
-# See /LICENSE for more information.
-#
+set -euo pipefail
 
-# Uncomment a feed source
-#sed -i 's/^#\(.*helloworld\)/\1/' feeds.conf.default
+TURBOACC_COMMIT="ae412f5dffb2199bdd6c0a02a7bcba31ae0e544e"
+INSTALLER_URL="https://raw.githubusercontent.com/mufeng05/turboacc/${TURBOACC_COMMIT}/add_turboacc.sh"
 
-# Add a feed source
-echo 'src-git helloworld https://github.com/fw876/helloworld' >>feeds.conf.default
-#echo 'src-git passwall https://github.com/xiaorouji/openwrt-passwall' >>feeds.conf.default
+curl -fsSL "${INSTALLER_URL}" -o /tmp/add_turboacc.sh
+
+# The upstream installer clones the moving main branch internally.
+# Pin that clone to the exact commit used for this build.
+sed -i 's@^git clone --depth=1 --single-branch https://github.com/mufeng05/turboacc "\$TMPDIR/turboacc" || exit 1$@git clone --depth=1 https://github.com/mufeng05/turboacc "\$TMPDIR/turboacc" || exit 1\n git -C "\$TMPDIR/turboacc" checkout ${TURBOACC_COMMIT}@' /tmp/add_turboacc.sh
+
+bash /tmp/add_turboacc.sh
