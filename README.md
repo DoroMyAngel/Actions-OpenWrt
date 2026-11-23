@@ -1,39 +1,41 @@
-**English** | [中文](https://p3terx.com/archives/build-openwrt-with-github-actions.html)
+# OpenWrt 25.12.6 x86_64 云编译
 
-# Actions-OpenWrt
+本仓库基于 [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt) 的 GitHub Actions 构建框架，使用 **OpenWrt 官方源码**，不是 LEDE 或 ImmortalWrt。
 
-[![LICENSE](https://img.shields.io/github/license/mashape/apistatus.svg?style=flat-square&label=LICENSE)](https://github.com/P3TERX/Actions-OpenWrt/blob/master/LICENSE)
-![GitHub Stars](https://img.shields.io/github/stars/P3TERX/Actions-OpenWrt.svg?style=flat-square&label=Stars&logo=github)
-![GitHub Forks](https://img.shields.io/github/forks/P3TERX/Actions-OpenWrt.svg?style=flat-square&label=Forks&logo=github)
+## 当前构建配置
 
-A template for building OpenWrt with GitHub Actions
+- 源码：`openwrt/openwrt`
+- 版本：`v25.12.6`
+- 目标：x86/64（QEMU/KVM 常见虚拟网卡驱动）
+- 根文件系统：ext4
+- 镜像：Legacy BIOS 与 UEFI 两种 combined 磁盘镜像
+- LuCI：包含 Web 管理界面
+- Full Cone NAT：turboacc 的 fw4 兼容模式（`firewall.defaults.fullcone=1`，使用 `nft_fullcone` 模块）
+- TCP 拥塞控制：编入 CUBIC 与 BBR，首次启动默认 BBR
+- 流量卸载：Linux 原生软件 Flow Offloading
+- 不启用：SFE、Fast Classifier、Broadcom Fullcone 模式
+- 不添加 helloworld 等额外第三方 feeds
 
-## Usage
+turboacc 集成固定在提交 `ae412f5dffb2199bdd6c0a02a7bcba31ae0e544e`，避免上游分支变化导致构建结果不可复现。
 
-- Click the [Use this template](https://github.com/P3TERX/Actions-OpenWrt/generate) button to create a new repository.
-- Generate `.config` files using [Lean's OpenWrt](https://github.com/coolsnowwolf/lede) source code. ( You can change it through environment variables in the workflow file. )
-- Push `.config` file to the GitHub repository.
-- Select `Build OpenWrt` on the Actions page.
-- Click the `Run workflow` button.
-- When the build is complete, click the `Artifacts` button in the upper right corner of the Actions page to download the binaries.
+## 启动云编译
 
-## Tips
+1. 打开仓库的 **Actions** 页面。
+2. 选择 **OpenWrt Builder**。
+3. 点击 **Run workflow** 启动手动构建。
+4. 成功后在本次运行的 Artifacts 下载固件；同时会创建 GitHub Release。
 
-- It may take a long time to create a `.config` file and build the OpenWrt firmware. Thus, before create repository to build your own firmware, you may check out if others have already built it which meet your needs by simply [search `Actions-Openwrt` in GitHub](https://github.com/search?q=Actions-openwrt).
-- Add some meta info of your built firmware (such as firmware architecture and installed packages) to your repository introduction, this will save others' time.
+BIOS 虚拟机使用 `combined.img.gz`；UEFI 虚拟机使用 `combined-efi.img.gz`。两种镜像都由当前配置生成。
 
-## Credits
+## 重要说明
 
-- [Microsoft Azure](https://azure.microsoft.com)
-- [GitHub Actions](https://github.com/features/actions)
+- 第一次构建先验证官方源码与 turboacc 补丁能否完整编译。
+- Full Cone 只影响本机 NAT 行为，不能绕过运营商 CGNAT。
+- BBR 主要作用于 TCP，不会直接改变 UDP NAT 穿透能力。
+- 构建产物用于 x86_64 虚拟机；刷写前确认虚拟机启动模式并备份现有配置。
+
+## 上游项目
+
+- [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
 - [OpenWrt](https://github.com/openwrt/openwrt)
-- [coolsnowwolf/lede](https://github.com/coolsnowwolf/lede)
-- [Mikubill/transfer](https://github.com/Mikubill/transfer)
-- [softprops/action-gh-release](https://github.com/softprops/action-gh-release)
-- [Mattraks/delete-workflow-runs](https://github.com/Mattraks/delete-workflow-runs)
-- [dev-drprasad/delete-older-releases](https://github.com/dev-drprasad/delete-older-releases)
-- [peter-evans/repository-dispatch](https://github.com/peter-evans/repository-dispatch)
-
-## License
-
-[MIT](https://github.com/P3TERX/Actions-OpenWrt/blob/main/LICENSE) © [**P3TERX**](https://p3terx.com)
+- [turboacc](https://github.com/mufeng05/turboacc)
