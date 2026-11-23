@@ -86,6 +86,13 @@ jobs:
       run: |
         cd openwrt
         make defconfig
+        grep -q '^CONFIG_TARGET_x86_64=y' .config
+        grep -q '^CONFIG_TARGET_ROOTFS_EXT4FS=y' .config
+        grep -q '^CONFIG_GRUB_IMAGES=y' .config
+        grep -q '^CONFIG_GRUB_EFI_IMAGES=y' .config
+        grep -q '^CONFIG_PACKAGE_luci-app-turboacc=y' .config
+        grep -q '^CONFIG_PACKAGE_kmod-nft-fullcone=y' .config
+        grep -q '^CONFIG_PACKAGE_kmod-tcp-bbr=y' .config
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
