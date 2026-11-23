@@ -5,6 +5,6 @@
 set -euo pipefail
 
 # uci-defaults scripts must be executable in the final root filesystem.
-if [ -f files/etc/uci-defaults/99-tcp-cca ]; then
-    chmod 0755 files/etc/uci-defaults/99-tcp-cca
+if [ -f files/etc/uci-defaults/zz-tcp-cca ]; then
+    chmod 0755 files/etc/uci-defaults/zz-tcp-cca
 fi
