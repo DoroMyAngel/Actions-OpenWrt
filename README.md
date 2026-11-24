@@ -40,3 +40,19 @@ BIOS 虚拟机使用 `combined.img.gz`；UEFI 虚拟机使用 `combined-efi.img.
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
 - [OpenWrt](https://github.com/openwrt/openwrt)
 - [turboacc](https://github.com/mufeng05/turboacc)
+
+## 预编译软件包
+
+当前 `25.12.6` 分支在官方 feeds 基础上增加了固定提交的 PassWall2 feeds，并预选以下软件：
+
+- **代理**：PassWall2、sing-box、Xray、Hysteria，以及 geoview、TCPing、V2Ray GeoIP/GeoSite 数据。
+- **容器**：Docker、Docker Compose、Dockerman。
+- **远程接入与证书**：Cloudflared、DDNS（Cloudflare）、ACME（acme.sh）、FRP、ZeroTier。
+- **监控**：Netdata、nlbwmon。
+- **网络工具**：iperf3、tcpdump、nmap、bind-host、smartmontools、ethtool、ip-full、tc-full。
+- **加速**：保留原 TurboACC、Full Cone NAT、BBR 配置，增加 CAKE。
+- **LuCI/其他**：Argon 主题及配置、微信推送、WOL、vlmcsd、QEMU Guest Agent。
+
+PassWall2 feeds 的提交固定在 `feeds.conf.default` 中，避免上游默认分支更新造成构建结果漂移。工作流在 `make defconfig` 后会检查核心软件包是否确实被选中；若 feed 或包名不匹配，会在下载和编译前明确失败，而不是悄悄生成缺包固件。
+
+注意：第三方 feed 与官方 OpenWrt 的兼容性仍需由实际 GitHub Actions 构建验证。内核模块（如 BBR、CAKE、Full Cone）会与本次固件内核一起编译，不要从其他版本单独复制安装。
