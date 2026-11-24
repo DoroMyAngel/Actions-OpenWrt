@@ -1,59 +1,56 @@
 #
-# https://github.com/P3TERX/Actions-OpenWrt
-#
-# File: .github/workflows/update-checker.yml
-# Description: Source code update checker
-#
-# Copyright (c) 2019-2024 P3TERX <https://p3terx.com>
-#
-# This is free software, licensed under the MIT License.
-# See /LICENSE for more information.
+# Official OpenWrt source update checker
+# Checks the selected ref in https://github.com/openwrt/openwrt
 #
 
 name: Update Checker
 
-env:
-  REPO_URL: https://github.com/coolsnowwolf/lede
-  REPO_BRANCH: master
-
 on:
   workflow_dispatch:
 #  schedule:
-#    - cron: 0 */18 * * *
+#    - cron: "0 */18 * * *"
+
+permissions:
+  contents: write
+
+env:
+  REPO_URL: https://github.com/openwrt/openwrt
+  REPO_BRANCH: v25.12.6
 
 jobs:
   check:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Get upstream commit
+        id: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init upstream
+          git -C upstream remote add origin "$REPO_URL"
+          git -C upstream fetch --depth=1 origin "$REPO_BRANCH"
+          commit="$(git -C upstream rev-parse FETCH_HEAD)"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          echo "Official OpenWrt ref: $REPO_BRANCH"
+          echo "Commit: $commit"
 
-    - name: Get Commit Hash
-      id: getHash
-      run: |
-        git clone --depth 1 $REPO_URL -b $REPO_BRANCH .
-        echo "commitHash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      - name: Compare upstream commit
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: .commitHash
+          key: openwrt-${{ env.REPO_BRANCH }}-${{ steps.upstream.outputs.commit }}
 
-    - name: Compare Commit Hash
-      id: cacheHash
-      uses: actions/cache@v3
-      with:
-        path: .commitHash
-        key: commitHash_${{ steps.getHash.outputs.commitHash }}
+      - name: Save new commit hash
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          printf '%s\n' "${{ steps.upstream.outputs.commit }}" > .commitHash
 
-    - name: Save New Commit Hash
-      if: steps.cacheHash.outputs.cache-hit != 'true'
-      run: |
-        echo ${{ steps.getHash.outputs.commitHash }} | tee .commitHash
-
-    - name: Trigger build
-      if: steps.cacheHash.outputs.cache-hit != 'true'
-      uses: peter-evans/repository-dispatch@v2
-      with:
-        token: ${{ github.token }}
-        event-type: Source Code Update
-
-    - name: Delete workflow runs
-      uses: Mattraks/delete-workflow-runs@v2
-      with:
-        retain_days: 0
-        keep_minimum_runs: 2
+      - name: Trigger firmware build
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          event-type: source-code-update
