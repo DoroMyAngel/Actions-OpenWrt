@@ -51,8 +51,10 @@ BIOS 虚拟机使用 `combined.img.gz`；UEFI 虚拟机使用 `combined-efi.img.
 - **监控**：Netdata、nlbwmon。
 - **网络工具**：iperf3、tcpdump、nmap、bind-host、smartmontools、ethtool、ip-full、tc-full。
 - **加速**：保留原 TurboACC、Full Cone NAT、BBR 配置，增加 CAKE。
-- **LuCI/其他**：Argon 主题及配置、微信推送、WOL、QEMU Guest Agent。
+- **LuCI/其他**：Argon 主题（配置功能已内置）、微信推送、WOL、QEMU Guest Agent。
 - **KMS 服务端**：仅添加 `vlmcsd` 主程序（ImmortalWrt 软件包定义），不编译 LuCI 管理界面，也不添加其中文语言包。`vlmcsd` 上游源码固定在 `Wind4/vlmcsd` 提交 `e599080486478e219cd065e141d6de050a450c27`，并使用软件包定义中的镜像校验哈希。
+
+Argon 主题源码固定在提交 `076355f33cd762172a67fa06ec6bd2230d9d9e09`，由工作流直接加入源码树。Argon 3.x 已将配置界面整合进主题包，因此不再单独选择旧的 `luci-app-argon-config` 兼容迁移包；中文翻译仍通过 `luci-i18n-argon-config-zh-cn` 单独提供（前提是该版本 feed 中存在此翻译包）。
 
 PassWall2 feeds 的提交固定在 `feeds.conf.default` 中，避免上游默认分支更新造成构建结果漂移。工作流会在 feeds 安装后将仓库内的 `package/vlmcsd` 加入 OpenWrt 源码树，并在 `make defconfig` 后检查 `vlmcsd` 主程序确实被选中，同时确认 LuCI app 和中文语言包未启用；工作流也会检查其他核心软件包是否确实被选中；若 feed 或包名不匹配，会在下载和编译前明确失败，而不是悄悄生成缺包固件。
 
