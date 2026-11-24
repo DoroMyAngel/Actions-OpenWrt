@@ -22,7 +22,7 @@
 
 ## 第三方组件
 
-- PassWall2 feeds 使用独立 feed 配置，跟随其上游分支更新；OpenWrt 官方 feeds 仍使用刚克隆的官方 main 源码树内配置。
+- PassWall2 feeds 使用独立 feed 配置，跟随其上游分支更新；OpenWrt 官方 feeds 继续使用本次克隆的官方 main 源码树自带配置。
 - Argon 主题固定在提交 `076355f33cd762172a67fa06ec6bd2230d9d9e09`。
 - 微信推送固定在提交 `e7d4d49b14f3755039cc236130afa7cfc65b1e09`。
 - vlmcsd 软件包定义及配置文件保存在本仓库 `package/vlmcsd`，上游源码固定在 `Wind4/vlmcsd` 提交 `e599080486478e219cd065e141d6de050a450c27`。
