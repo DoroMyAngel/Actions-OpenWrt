@@ -119,6 +119,7 @@ jobs:
       id: package
       run: |
         cd openwrt
+        set -x
         make defconfig
         test -f package/vlmcsd/Makefile
         grep -q '^CONFIG_PACKAGE_vlmcsd=y' .config
@@ -153,6 +154,7 @@ jobs:
           grep -q "^CONFIG_PACKAGE_${pkg}=y" .config || { echo "ERROR: requested package not selected: ${pkg}"; exit 1; }
         done
 
+        set +x
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
