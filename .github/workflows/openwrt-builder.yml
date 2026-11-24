@@ -82,15 +82,12 @@ jobs:
         git -C /tmp/luci-theme-argon archive "$ARGON_COMMIT" | tar -x -C openwrt/package/luci-theme-argon
         test -f openwrt/package/luci-theme-argon/Makefile
 
-    - name: Fix WeeChat package dependency
+    - name: Exclude unused WeeChat LuCI package
       run: |
-        WEECHAT_MAKEFILE=openwrt/feeds/luci/applications/luci-app-weechat/Makefile
-        if [ -f "$WEECHAT_MAKEFILE" ]; then
-          grep -q 'LUCI_DEPENDS:=+luci-base +weechat +rpcd-mod-ucode' "$WEECHAT_MAKEFILE"
-          sed -i 's/LUCI_DEPENDS:=+luci-base +weechat +rpcd-mod-ucode/LUCI_DEPENDS:=+luci-base +weechat-full +rpcd-mod-ucode/' "$WEECHAT_MAKEFILE"
-          grep -q 'LUCI_DEPENDS:=+luci-base +weechat-full +rpcd-mod-ucode' "$WEECHAT_MAKEFILE"
-        else
-          echo "ERROR: expected WeeChat LuCI Makefile not found"
+        cd openwrt
+        ./scripts/feeds uninstall luci-app-weechat
+        if find package/feeds -name 'luci-app-weechat' -print -quit | grep -q .; then
+          echo "ERROR: luci-app-weechat is still installed in package feeds"
           exit 1
         fi
 
