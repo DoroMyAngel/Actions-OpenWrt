@@ -51,8 +51,9 @@ BIOS 虚拟机使用 `combined.img.gz`；UEFI 虚拟机使用 `combined-efi.img.
 - **监控**：Netdata、nlbwmon。
 - **网络工具**：iperf3、tcpdump、nmap、bind-host、smartmontools、ethtool、ip-full、tc-full。
 - **加速**：保留原 TurboACC、Full Cone NAT、BBR 配置，增加 CAKE。
-- **LuCI/其他**：Argon 主题及配置、微信推送、WOL、vlmcsd、QEMU Guest Agent。
+- **LuCI/其他**：Argon 主题及配置、微信推送、WOL、QEMU Guest Agent。
+- **KMS 服务端**：仅添加 `vlmcsd` 主程序（ImmortalWrt 软件包定义），不编译 LuCI 管理界面，也不添加其中文语言包。`vlmcsd` 上游源码固定在 `Wind4/vlmcsd` 提交 `e599080486478e219cd065e141d6de050a450c27`，并使用软件包定义中的镜像校验哈希。
 
-PassWall2 feeds 的提交固定在 `feeds.conf.default` 中，避免上游默认分支更新造成构建结果漂移。工作流在 `make defconfig` 后会检查核心软件包是否确实被选中；若 feed 或包名不匹配，会在下载和编译前明确失败，而不是悄悄生成缺包固件。
+PassWall2 feeds 的提交固定在 `feeds.conf.default` 中，避免上游默认分支更新造成构建结果漂移。工作流会在 feeds 安装后将仓库内的 `package/vlmcsd` 加入 OpenWrt 源码树，并在 `make defconfig` 后检查 `vlmcsd` 主程序确实被选中，同时确认 LuCI app 和中文语言包未启用；工作流也会检查其他核心软件包是否确实被选中；若 feed 或包名不匹配，会在下载和编译前明确失败，而不是悄悄生成缺包固件。
 
 注意：第三方 feed 与官方 OpenWrt 的兼容性仍需由实际 GitHub Actions 构建验证。内核模块（如 BBR、CAKE、Full Cone）会与本次固件内核一起编译，不要从其他版本单独复制安装。
