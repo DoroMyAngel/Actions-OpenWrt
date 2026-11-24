@@ -73,6 +73,12 @@ jobs:
     - name: Install feeds
       run: cd openwrt && ./scripts/feeds install -a
 
+    - name: Add vlmcsd server package
+      run: |
+        test -f package/vlmcsd/Makefile
+        mkdir -p openwrt/package/vlmcsd
+        cp -a package/vlmcsd/. openwrt/package/vlmcsd/
+
     - name: Load custom configuration
       run: |
         [ -e files ] && mv files openwrt/files
@@ -86,6 +92,10 @@ jobs:
       run: |
         cd openwrt
         make defconfig
+        test -f package/vlmcsd/Makefile
+        grep -q '^CONFIG_PACKAGE_vlmcsd=y' .config
+        ! grep -q '^CONFIG_PACKAGE_luci-app-vlmcsd=y' .config
+        ! grep -q '^CONFIG_PACKAGE_luci-i18n-vlmcsd-zh-cn=y' .config
         grep -q '^CONFIG_TARGET_x86_64=y' .config
         grep -q '^CONFIG_TARGET_ROOTFS_EXT4FS=y' .config
         grep -q '^CONFIG_GRUB_IMAGES=y' .config
@@ -105,7 +115,7 @@ jobs:
           netdata nlbwmon luci-app-nlbwmon \
           iperf3-ssl tcpdump nmap bind-host smartmontools ethtool-full \
           kmod-sched-cake luci-theme-argon luci-app-argon-config \
-          luci-app-wechatpush luci-app-wol etherwake luci-app-vlmcsd vlmcsd qemu-ga
+          luci-app-wechatpush luci-app-wol etherwake vlmcsd qemu-ga
         do
           grep -q "^CONFIG_PACKAGE_${pkg}=y" .config || { echo "ERROR: requested package not selected: ${pkg}"; exit 1; }
         done
