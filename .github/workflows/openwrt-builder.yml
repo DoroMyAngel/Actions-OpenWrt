@@ -95,6 +95,21 @@ jobs:
         grep -q '^CONFIG_PACKAGE_kmod-tcp-bbr=y' .config
         grep -q '^CONFIG_KERNEL_DEBUG_INFO_BTF=y' .config
         grep -q '^CONFIG_KERNEL_XDP_SOCKETS=y' .config
+
+        # Fail early if a requested package is missing from the configured feeds.
+        for pkg in \
+          luci-app-passwall2 sing-box xray-core hysteria \
+          docker dockerd docker-compose luci-app-dockerman \
+          cloudflared luci-app-cloudflared ddns-scripts-cloudflare luci-app-ddns \
+          acme-acmesh acme-acmesh-dnsapi luci-app-acme frpc luci-app-frpc zerotier \
+          netdata nlbwmon luci-app-nlbwmon \
+          iperf3-ssl tcpdump nmap bind-host smartmontools ethtool-full \
+          kmod-sched-cake luci-theme-argon luci-app-argon-config \
+          luci-app-wechatpush luci-app-wol etherwake luci-app-vlmcsd vlmcsd qemu-ga
+        do
+          grep -q "^CONFIG_PACKAGE_${pkg}=y" .config || { echo "ERROR: requested package not selected: ${pkg}"; exit 1; }
+        done
+
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
