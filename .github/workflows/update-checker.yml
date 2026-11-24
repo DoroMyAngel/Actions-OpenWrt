@@ -2,7 +2,7 @@
 # https://github.com/P3TERX/Actions-OpenWrt
 #
 # File: .github/workflows/update-checker.yml
-# Description: Source code update checker
+# Description: Official OpenWrt source update checker
 #
 # Copyright (c) 2019-2024 P3TERX <https://p3terx.com>
 #
@@ -13,8 +13,8 @@
 name: Update Checker
 
 env:
-  REPO_URL: https://github.com/coolsnowwolf/lede
-  REPO_BRANCH: master
+  REPO_URL: https://github.com/openwrt/openwrt
+  REPO_BRANCH: main
 
 on:
   workflow_dispatch:
