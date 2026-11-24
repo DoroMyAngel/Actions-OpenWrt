@@ -82,6 +82,16 @@ jobs:
         git -C /tmp/luci-theme-argon archive "$ARGON_COMMIT" | tar -x -C openwrt/package/luci-theme-argon
         test -f openwrt/package/luci-theme-argon/Makefile
 
+    - name: Add WeChat Push package
+      run: |
+        WECHATPUSH_COMMIT=e7d4d49b14f3755039cc236130afa7cfc65b1e09
+        git clone https://github.com/tty228/luci-app-wechatpush.git /tmp/luci-app-wechatpush
+        git -C /tmp/luci-app-wechatpush checkout --detach "$WECHATPUSH_COMMIT"
+        mkdir -p openwrt/package/luci-app-wechatpush
+        git -C /tmp/luci-app-wechatpush archive "$WECHATPUSH_COMMIT" | tar -x -C openwrt/package/luci-app-wechatpush
+        test -f openwrt/package/luci-app-wechatpush/Makefile
+        test -f openwrt/package/luci-app-wechatpush/po/zh_Hans/wechatpush.po
+
     - name: Add vlmcsd server package
       run: |
         test -f package/vlmcsd/Makefile
@@ -103,6 +113,11 @@ jobs:
         make defconfig
         test -f package/vlmcsd/Makefile
         grep -q '^CONFIG_PACKAGE_vlmcsd=y' .config
+        grep -q '^CONFIG_PACKAGE_luci-app-wechatpush=y' .config
+        grep -q '^CONFIG_PACKAGE_luci-app-wechatpush_Local_Disk_Information_Detection=y' .config
+        grep -q '^CONFIG_PACKAGE_luci-app-wechatpush_Host_Information_Detection=y' .config
+        ! grep -q '^CONFIG_PACKAGE_luci-app-wechatpush_Enable_Traffic_Monitoring=y' .config
+        grep -q '^CONFIG_PACKAGE_luci-i18n-wechatpush-zh-cn=y' .config
         ! grep -q '^CONFIG_PACKAGE_luci-app-vlmcsd=y' .config
         ! grep -q '^CONFIG_PACKAGE_luci-i18n-vlmcsd-zh-cn=y' .config
         grep -q '^CONFIG_TARGET_x86_64=y' .config
