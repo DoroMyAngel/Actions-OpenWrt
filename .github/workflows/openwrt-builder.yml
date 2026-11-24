@@ -73,6 +73,15 @@ jobs:
     - name: Install feeds
       run: cd openwrt && ./scripts/feeds install -a
 
+    - name: Add Argon theme package
+      run: |
+        ARGON_COMMIT=076355f33cd762172a67fa06ec6bd2230d9d9e09
+        git clone https://github.com/jerrykuku/luci-theme-argon.git /tmp/luci-theme-argon
+        git -C /tmp/luci-theme-argon checkout --detach "$ARGON_COMMIT"
+        mkdir -p openwrt/package/luci-theme-argon
+        cp -a /tmp/luci-theme-argon/. openwrt/package/luci-theme-argon/
+        test -f openwrt/package/luci-theme-argon/Makefile
+
     - name: Add vlmcsd server package
       run: |
         test -f package/vlmcsd/Makefile
@@ -114,7 +123,7 @@ jobs:
           acme-acmesh acme-acmesh-dnsapi luci-app-acme frpc luci-app-frpc zerotier \
           netdata nlbwmon luci-app-nlbwmon \
           iperf3-ssl tcpdump nmap bind-host smartmontools ethtool-full \
-          kmod-sched-cake luci-theme-argon luci-app-argon-config \
+          kmod-sched-cake luci-theme-argon \
           luci-app-wechatpush luci-app-wol etherwake vlmcsd qemu-ga
         do
           grep -q "^CONFIG_PACKAGE_${pkg}=y" .config || { echo "ERROR: requested package not selected: ${pkg}"; exit 1; }
