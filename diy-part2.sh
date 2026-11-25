@@ -235,7 +235,7 @@ import json
 acl_data = json.loads(acl.read_text())
 read_files = acl_data.setdefault("luci-app-firewall", {}).setdefault("read", {}).setdefault("file", {})
 read_files["/usr/libexec/luci-firewall-status"] = ["exec"]
-acl.write_text(json.dumps(acl_data, indent="\\t") + "\\n")
+acl.write_text(json.dumps(acl_data, indent="\t") + "\n")
 
 po = Path("feeds/luci/applications/luci-app-firewall/po/zh_Hans/firewall.po")
 if not po.is_file():
