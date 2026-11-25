@@ -139,7 +139,10 @@ jobs:
         grep -q '^CONFIG_PACKAGE_kmod-tcp-bbr=y' .config
         grep -q '^CONFIG_PACKAGE_kmod-nft-offload=y' .config
         test ! -d package/turboacc
-        grep -q "option(form.ListValue, 'tcp_cca'" feeds/luci/applications/luci-app-firewall/htdocs/luci-static/resources/view/firewall/zones.js
+        grep -q "form.ListValue, 'tcpcca'" feeds/luci/applications/luci-app-firewall/htdocs/luci-static/resources/view/firewall/zones.js
+        grep -q "Flow offloading type" feeds/luci/applications/luci-app-firewall/htdocs/luci-static/resources/view/firewall/zones.js
+        grep -q "firewall-runtime-status" feeds/luci/applications/luci-app-firewall/htdocs/luci-static/resources/view/firewall/zones.js
+        test -x files/usr/libexec/luci-firewall-status
         test -f files/etc/init.d/tcp-cca
         test -f files/etc/uci-defaults/zz-tcp-cca
         test -f package/network/config/firewall4/patches/001-sonic-fullcone.patch
