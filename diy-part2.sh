@@ -227,6 +227,16 @@ printf '{"nat_mode":"%s","tcp_cca":"%s","hnat_available":%s,"ecm_available":%s,"
 """)
 status.chmod(0o755)
 
+# Permit LuCI's authenticated RPC helper to execute the read-only status script.
+acl = Path("feeds/luci/applications/luci-app-firewall/root/usr/share/rpcd/acl.d/luci-app-firewall.json")
+if not acl.is_file():
+    raise SystemExit(f"ERROR: missing LuCI firewall ACL: {acl}")
+import json
+acl_data = json.loads(acl.read_text())
+read_files = acl_data.setdefault("luci-app-firewall", {}).setdefault("read", {}).setdefault("file", {})
+read_files["/usr/libexec/luci-firewall-status"] = ["exec"]
+acl.write_text(json.dumps(acl_data, indent="\\t") + "\\n")
+
 po = Path("feeds/luci/applications/luci-app-firewall/po/zh_Hans/firewall.po")
 if not po.is_file():
     raise SystemExit(f"ERROR: missing LuCI Chinese translation file: {po}")
@@ -251,7 +261,8 @@ entries = [
     ("Software flow offloading", "软件流量卸载"),
     ("Software based offloading for routing/NAT.", "基于软件的路由/NAT 卸载。"),
     ("Hardware flow offloading", "硬件流量卸载"),
-    ("Hardware based offloading for routing with/without NAT. Requires hardware NAT support.", "使用硬件进行路由卸载，可支持或不支持 NAT。需要硬件 NAT 支持。"),
+    ("Hardware based offloading for routing with/without NAT.", "使用硬件进行路由卸载，可支持或不支持 NAT。"),
+    ("Requires hardware NAT support.", "需要硬件 NAT 支持。"),
     ("MediaTek HNAT", "MediaTek HNAT"),
     ("Hardware NAT offloading using the MediaTek vendor driver.", "使用 MediaTek 原厂驱动的硬件 NAT 卸载。"),
     ("Qualcomm NSS ECM acceleration", "Qualcomm NSS ECM 加速"),
