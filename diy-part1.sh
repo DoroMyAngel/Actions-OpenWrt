@@ -23,27 +23,27 @@ if not patch.is_file():
 
 content = patch.read_text()
 pattern = re.compile(
-    r"(?ms)^--- a/root/etc/config/firewall\\n"
-    r"\\+\\+\\+ b/root/etc/config/firewall\\n"
-    r"@@ .*?^--- a/root/usr/share/firewall4/templates/ruleset\\.uc\\n"
+    r"(?ms)^--- a/root/etc/config/firewall\n"
+    r"\\+\\+\\+ b/root/etc/config/firewall\n"
+    r"@@ .*?^--- a/root/usr/share/firewall4/templates/ruleset\\.uc\n"
 )
 replacement = (
-    "--- a/root/etc/config/firewall\\n"
-    "+++ b/root/etc/config/firewall\\n"
-    "@@ -5,1 +5,5 @@\\n"
-    " \\toption forward\\t\\tREJECT\\n"
-    "+\\toption flow_offloading\\t1\\n"
-    "+\\toption flow_offloading_hw\\t0\\n"
-    "+\\toption fullcone\\t\\t1\\n"
-    "+\\toption fullcone6\\t0\\n"
-    "--- a/root/usr/share/firewall4/templates/ruleset.uc\\n"
+    "--- a/root/etc/config/firewall\n"
+    "+++ b/root/etc/config/firewall\n"
+    "@@ -5,1 +5,5 @@\n"
+    " \\toption forward\\t\\tREJECT\n"
+    "+\\toption flow_offloading\\t1\n"
+    "+\\toption flow_offloading_hw\\t0\n"
+    "+\\toption fullcone\\t\\t1\n"
+    "+\\toption fullcone6\\t0\n"
+    "--- a/root/usr/share/firewall4/templates/ruleset.uc\n"
 )
 updated, count = pattern.subn(lambda _: replacement, content, count=1)
 if count != 1:
     raise SystemExit("ERROR: could not locate the expected firewall4 defaults hunk; refusing to continue")
 
 patch.write_text(updated)
-if "option flow_offloading_hw\\t0" not in updated:
+if "option flow_offloading_hw\t0" not in updated:
     raise SystemExit("ERROR: hardware flow offloading is not disabled in the rebased patch")
 print("Rebased Fullcone firewall4 patch; software offloading=1, hardware offloading=0.")
 PY
