@@ -4,6 +4,36 @@
 #
 set -euo pipefail
 
+# Install a small procd service that applies the selected local TCP CCA and
+# re-applies it whenever the firewall UCI configuration changes.
+mkdir -p files/etc/init.d
+cat > files/etc/init.d/tcp-cca <<'EOF'
+#!/bin/sh /etc/rc.common
+START=99
+USE_PROCD=1
+
+apply_tcp_cca() {
+    local cca available
+    cca="$(uci -q get firewall.@defaults[0].tcp_cca)"
+    case "$cca" in
+        bbr) modprobe tcp_bbr 2>/dev/null || true ;;
+        cubic|"") cca="cubic" ;;
+        *) logger -t tcp-cca "Unsupported algorithm '$cca'; falling back to CUBIC"; cca="cubic" ;;
+    esac
+
+    available=" $(cat /proc/sys/net/ipv4/tcp_available_congestion_control 2>/dev/null) "
+    case "$available" in
+        *" $cca "*) sysctl -q -w "net.ipv4.tcp_congestion_control=$cca" ;;
+        *) logger -t tcp-cca "Algorithm '$cca' unavailable; falling back to CUBIC"; sysctl -q -w net.ipv4.tcp_congestion_control=cubic ;;
+    esac
+}
+
+start_service() { apply_tcp_cca; }
+reload_service() { apply_tcp_cca; }
+service_triggers() { procd_add_reload_trigger firewall; }
+EOF
+chmod 0755 files/etc/init.d/tcp-cca
+
 [ ! -f files/etc/uci-defaults/zz-tcp-cca ] || chmod 0755 files/etc/uci-defaults/zz-tcp-cca
 [ ! -f files/etc/init.d/tcp-cca ] || chmod 0755 files/etc/init.d/tcp-cca
 
