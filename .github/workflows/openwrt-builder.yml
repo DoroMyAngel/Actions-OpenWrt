@@ -143,6 +143,7 @@ jobs:
         grep -q "Flow offloading type" feeds/luci/applications/luci-app-firewall/htdocs/luci-static/resources/view/firewall/zones.js
         grep -q "firewall-runtime-status" feeds/luci/applications/luci-app-firewall/htdocs/luci-static/resources/view/firewall/zones.js
         test -x files/usr/libexec/luci-firewall-status
+        grep -q '/usr/libexec/luci-firewall-status' feeds/luci/applications/luci-app-firewall/root/usr/share/rpcd/acl.d/luci-app-firewall.json
         test -f files/etc/init.d/tcp-cca
         test -f files/etc/uci-defaults/zz-tcp-cca
         test -f package/network/config/firewall4/patches/001-sonic-fullcone.patch
