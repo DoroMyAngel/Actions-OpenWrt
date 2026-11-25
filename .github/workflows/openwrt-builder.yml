@@ -65,9 +65,7 @@ jobs:
         if [ -e "$FEEDS_CONF" ]; then
           cat "$FEEDS_CONF" >> openwrt/feeds.conf.default
         fi
-        chmod +x $DIY_P1_SH
-        cd openwrt
-        $GITHUB_WORKSPACE/$DIY_P1_SH
+        # TurboACC is no longer installed; no part-1 installer is run.
 
     - name: Update feeds
       run: cd openwrt && ./scripts/feeds update -a
@@ -136,12 +134,14 @@ jobs:
         grep -q '^CONFIG_TARGET_ROOTFS_EXT4FS=y' .config
         grep -q '^CONFIG_GRUB_IMAGES=y' .config
         grep -q '^CONFIG_GRUB_EFI_IMAGES=y' .config
-        grep -q '^CONFIG_PACKAGE_luci-app-turboacc=y' .config
-        ! grep -q '^CONFIG_PACKAGE_kmod-nft-fullcone=y' .config
-        ! grep -q '^CONFIG_PACKAGE_TURBOACC_INCLUDE_FULLCONE=y' .config
+        ! grep -q '^CONFIG_PACKAGE_luci-app-turboacc=y' .config
+        ! grep -q '^CONFIG_PACKAGE_TURBOACC_' .config
+        grep -q '^CONFIG_PACKAGE_kmod-tcp-bbr=y' .config
         grep -q '^CONFIG_PACKAGE_kmod-nft-offload=y' .config
-        grep -q '^CONFIG_PACKAGE_TURBOACC_INCLUDE_FLOW_OFFLOADING=y' .config
-        grep -q '^CONFIG_PACKAGE_TURBOACC_INCLUDE_BBR_CCA=y' .config
+        test ! -d package/turboacc
+        grep -q "option(form.ListValue, 'tcp_cca'" feeds/luci/applications/luci-app-firewall/htdocs/luci-static/resources/view/firewall/zones.js
+        test -f files/etc/init.d/tcp-cca
+        test -f files/etc/uci-defaults/zz-tcp-cca
         test -f package/network/config/firewall4/patches/001-sonic-fullcone.patch
         test -f package/libs/libnftnl/patches/001-libnftnl-add-fullcone-expression-support.patch
         test -f package/network/utils/nftables/patches/002-nftables-add-fullcone-expression-support.patch
