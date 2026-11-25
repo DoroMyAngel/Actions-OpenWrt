@@ -1,9 +1,22 @@
 #!/bin/sh
-# Run after turboacc's own uci-defaults script.
-# SONiC Fullcone is controlled by the TurboACC page and its per-zone settings.
+# First-boot defaults for SONiC Fullcone and native OpenWrt acceleration.
 uci -q set firewall.@defaults[0].fullcone='1'
-uci -q set firewall.@defaults[0].tcpcca='bbr'
+
+# Preserve Fullcone on every masquerading zone; SONiC requires both global and zone gates.
+for zone in $(uci -q show firewall | sed -n 's/^firewall\.\([^=]*\)=zone$/\1/p'); do
+    if [ "$(uci -q get "firewall.$zone.masq")" = '1' ]; then
+        uci -q set "firewall.$zone.fullcone"='1'
+    fi
+done
+
+# Default TCP congestion control to BBR; selectable in Firewall > General Settings.
+uci -q set firewall.@defaults[0].tcp_cca='bbr'
 uci -q set firewall.@defaults[0].flow_offloading='1'
 uci -q set firewall.@defaults[0].flow_offloading_hw='0'
 uci -q commit firewall
+
+if [ -x /etc/init.d/tcp-cca ]; then
+    /etc/init.d/tcp-cca enable
+    /etc/init.d/tcp-cca start
+fi
 exit 0
