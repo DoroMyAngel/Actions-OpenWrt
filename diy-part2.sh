@@ -171,7 +171,7 @@ flow = """\t\t/* Netfilter flow offload support */
 \t\t\t\to.depends('offloading_type', '2');
 \t\t\t}
 \t\t}"""
-data = data.slice(0, flow_start) + flow + data.slice(flow_end)
+data = data[:flow_start] + flow + data[flow_end:]
 
 # Insert LEDE-style status panel and refresh it every five seconds.
 data = once(data, "\t\treturn m.render();",
