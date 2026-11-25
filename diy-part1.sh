@@ -7,7 +7,7 @@ set -euo pipefail
 
 INSTALLER_URL="https://raw.githubusercontent.com/mufeng05/turboacc/main/add_turboacc.sh"
 
-curl -fsSL "${INSTALLER_URL}" -o /tmp/add_turboacc.sh
+curl -fsSL "\${INSTALLER_URL}" -o /tmp/add_turboacc.sh
 bash /tmp/add_turboacc.sh
 
 # Rebase TurboACC's Fullcone defaults hunk for current OpenWrt firewall4.
@@ -24,18 +24,18 @@ if not patch.is_file():
 content = patch.read_text()
 pattern = re.compile(
     r"(?ms)^--- a/root/etc/config/firewall\n"
-    r"\\+\\+\\+ b/root/etc/config/firewall\n"
-    r"@@ .*?^--- a/root/usr/share/firewall4/templates/ruleset\\.uc\n"
+    r"\+\+\+ b/root/etc/config/firewall\n"
+    r"@@ .*?^--- a/root/usr/share/firewall4/templates/ruleset\.uc\n"
 )
 replacement = (
     "--- a/root/etc/config/firewall\n"
     "+++ b/root/etc/config/firewall\n"
     "@@ -5,1 +5,5 @@\n"
-    " \\toption forward\\t\\tREJECT\n"
-    "+\\toption flow_offloading\\t1\n"
-    "+\\toption flow_offloading_hw\\t0\n"
-    "+\\toption fullcone\\t\\t1\n"
-    "+\\toption fullcone6\\t0\n"
+    " \toption forward\t\tREJECT\n"
+    "+\toption flow_offloading\t1\n"
+    "+\toption flow_offloading_hw\t0\n"
+    "+\toption fullcone\t\t1\n"
+    "+\toption fullcone6\t0\n"
     "--- a/root/usr/share/firewall4/templates/ruleset.uc\n"
 )
 updated, count = pattern.subn(lambda _: replacement, content, count=1)
