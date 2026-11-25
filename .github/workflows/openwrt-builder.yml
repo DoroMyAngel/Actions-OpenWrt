@@ -21,7 +21,7 @@ on:
 
 env:
   REPO_URL: https://github.com/openwrt/openwrt
-  REPO_BRANCH: v25.12.6
+  REPO_BRANCH: openwrt-25.12
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
   DIY_P1_SH: diy-part1.sh
@@ -75,11 +75,9 @@ jobs:
 
     - name: Add Argon theme package
       run: |
-        ARGON_COMMIT=076355f33cd762172a67fa06ec6bd2230d9d9e09
-        git clone https://github.com/jerrykuku/luci-theme-argon.git /tmp/luci-theme-argon
-        git -C /tmp/luci-theme-argon checkout --detach "$ARGON_COMMIT"
+        git clone --depth=1 https://github.com/jerrykuku/luci-theme-argon.git /tmp/luci-theme-argon
         mkdir -p openwrt/package/luci-theme-argon
-        git -C /tmp/luci-theme-argon archive "$ARGON_COMMIT" | tar -x -C openwrt/package/luci-theme-argon
+        git -C /tmp/luci-theme-argon archive HEAD | tar -x -C openwrt/package/luci-theme-argon
         test -f openwrt/package/luci-theme-argon/Makefile
 
     - name: Exclude unused WeeChat LuCI package
@@ -93,11 +91,9 @@ jobs:
 
     - name: Add WeChat Push package
       run: |
-        WECHATPUSH_COMMIT=e7d4d49b14f3755039cc236130afa7cfc65b1e09
-        git clone https://github.com/tty228/luci-app-wechatpush.git /tmp/luci-app-wechatpush
-        git -C /tmp/luci-app-wechatpush checkout --detach "$WECHATPUSH_COMMIT"
+        git clone --depth=1 https://github.com/tty228/luci-app-wechatpush.git /tmp/luci-app-wechatpush
         mkdir -p openwrt/package/luci-app-wechatpush
-        git -C /tmp/luci-app-wechatpush archive "$WECHATPUSH_COMMIT" | tar -x -C openwrt/package/luci-app-wechatpush
+        git -C /tmp/luci-app-wechatpush archive HEAD | tar -x -C openwrt/package/luci-app-wechatpush
         test -f openwrt/package/luci-app-wechatpush/Makefile
         test -f openwrt/package/luci-app-wechatpush/po/zh_Hans/wechatpush.po
 
