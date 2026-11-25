@@ -137,7 +137,15 @@ jobs:
         grep -q '^CONFIG_GRUB_IMAGES=y' .config
         grep -q '^CONFIG_GRUB_EFI_IMAGES=y' .config
         grep -q '^CONFIG_PACKAGE_luci-app-turboacc=y' .config
-        grep -q '^CONFIG_PACKAGE_kmod-nft-fullcone=y' .config
+        ! grep -q '^CONFIG_PACKAGE_kmod-nft-fullcone=y' .config
+        ! grep -q '^CONFIG_PACKAGE_TURBOACC_INCLUDE_FULLCONE=y' .config
+        grep -q '^CONFIG_PACKAGE_kmod-nft-offload=y' .config
+        grep -q '^CONFIG_PACKAGE_TURBOACC_INCLUDE_FLOW_OFFLOADING=y' .config
+        grep -q '^CONFIG_PACKAGE_TURBOACC_INCLUDE_BBR_CCA=y' .config
+        test -f package/network/config/firewall4/patches/001-sonic-fullcone.patch
+        test -f package/libs/libnftnl/patches/001-libnftnl-add-fullcone-expression-support.patch
+        test -f package/network/utils/nftables/patches/002-nftables-add-fullcone-expression-support.patch
+        find target/linux/generic/hack-* -maxdepth 1 -name '984-add-sonic-fullcone-support.patch' -print -quit | grep -q .
         grep -q '^CONFIG_PACKAGE_kmod-tcp-bbr=y' .config
         grep -q '^CONFIG_KERNEL_DEBUG_INFO_BTF=y' .config
         grep -q '^CONFIG_KERNEL_XDP_SOCKETS=y' .config
