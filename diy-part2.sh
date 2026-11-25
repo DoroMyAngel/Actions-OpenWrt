@@ -267,7 +267,7 @@ for msgid, msgstr in entries:
     block += ['msgid "' + msgid.replace('"', '\\"') + '"',
               'msgstr "' + msgstr.replace('"', '\\"') + '"', '']
 block.append(end)
-text = text.rstrip() + "\\n\\n" + "\\n".join(block) + "\\n"
+text = text.rstrip() + "\n\n" + "\n".join(block) + "\n"
 po.write_text(text)
 print("Ported LEDE TCP CCA, flow offloading and runtime status; retained SONiC Fullcone UI.")
 PY
