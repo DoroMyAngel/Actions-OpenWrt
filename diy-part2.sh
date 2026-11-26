@@ -223,7 +223,7 @@ else
     fi
 fi
 
-printf '{"nat_mode":"%s","tcp_cca":"%s","hnat_available":%s,"ecm_available":%s,"ppe_bind_rate_available":%s}\\\\n' "$nat_mode" "$tcp_cca" "$hnat_available" "$ecm_available" "$ppe_bind_rate_available"
+printf '{"nat_mode":"%s","tcp_cca":"%s","hnat_available":%s,"ecm_available":%s,"ppe_bind_rate_available":%s}' "$nat_mode" "$tcp_cca" "$hnat_available" "$ecm_available" "$ppe_bind_rate_available"
 """)
 status.chmod(0o755)
 
