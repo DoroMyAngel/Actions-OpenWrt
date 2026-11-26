@@ -111,6 +111,7 @@ jobs:
       run: |
         [ -e files ] && mv files openwrt/files
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        chmod +x openwrt/files/etc/uci-defaults/zz-miniupnpd-ext-allow-private-ipv4
         chmod +x $DIY_P2_SH
         cd openwrt
         # Keep PassWall2 feeds available for package selection, but omit their invalid
@@ -172,6 +173,8 @@ jobs:
         test ! -e files/usr/libexec/luci-firewall-status
         test ! -e files/etc/init.d/tcp-cca
         test -f files/etc/uci-defaults/zz-sonic-fullcone
+        test -x files/etc/uci-defaults/zz-miniupnpd-ext-allow-private-ipv4
+        grep -q "ext_allow_private_ipv4=\x271\x27" files/etc/uci-defaults/zz-miniupnpd-ext-allow-private-ipv4
         test -f package/network/config/firewall4/patches/001-sonic-fullcone.patch
         test -f feeds/luci/applications/luci-app-firewall/patches/001-add-fullcone-options.patch
         test -f package/libs/libnftnl/patches/001-libnftnl-add-fullcone-expression-support.patch
@@ -183,7 +186,7 @@ jobs:
 
         # Fail early if a requested package is missing from the configured feeds.
         for pkg in \
-          luci-app-passwall2 sing-box xray-core hysteria \
+          luci-app-passwall2 sing-box xray-core hysteria miniupnpd-nftables \
           docker dockerd docker-compose luci-app-dockerman \
           cloudflared luci-app-cloudflared ddns-scripts-cloudflare luci-app-ddns \
           acme-acmesh acme-acmesh-dnsapi luci-app-acme frpc luci-app-frpc zerotier \
