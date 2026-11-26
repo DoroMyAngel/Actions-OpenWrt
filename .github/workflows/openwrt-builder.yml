@@ -75,9 +75,11 @@ jobs:
 
     - name: Add Argon theme package
       run: |
-        git clone --depth=1 https://github.com/jerrykuku/luci-theme-argon.git /tmp/luci-theme-argon
+        ARGON_COMMIT=076355f33cd762172a67fa06ec6bd2230d9d9e09
+        git clone https://github.com/jerrykuku/luci-theme-argon.git /tmp/luci-theme-argon
+        git -C /tmp/luci-theme-argon checkout --detach "$ARGON_COMMIT"
         mkdir -p openwrt/package/luci-theme-argon
-        git -C /tmp/luci-theme-argon archive HEAD | tar -x -C openwrt/package/luci-theme-argon
+        git -C /tmp/luci-theme-argon archive "$ARGON_COMMIT" | tar -x -C openwrt/package/luci-theme-argon
         test -f openwrt/package/luci-theme-argon/Makefile
 
     - name: Exclude unused WeeChat LuCI package
@@ -91,9 +93,11 @@ jobs:
 
     - name: Add WeChat Push package
       run: |
-        git clone --depth=1 https://github.com/tty228/luci-app-wechatpush.git /tmp/luci-app-wechatpush
+        WECHATPUSH_COMMIT=e7d4d49b14f3755039cc236130afa7cfc65b1e09
+        git clone https://github.com/tty228/luci-app-wechatpush.git /tmp/luci-app-wechatpush
+        git -C /tmp/luci-app-wechatpush checkout --detach "$WECHATPUSH_COMMIT"
         mkdir -p openwrt/package/luci-app-wechatpush
-        git -C /tmp/luci-app-wechatpush archive HEAD | tar -x -C openwrt/package/luci-app-wechatpush
+        git -C /tmp/luci-app-wechatpush archive "$WECHATPUSH_COMMIT" | tar -x -C openwrt/package/luci-app-wechatpush
         test -f openwrt/package/luci-app-wechatpush/Makefile
         test -f openwrt/package/luci-app-wechatpush/po/zh_Hans/wechatpush.po
 
@@ -130,8 +134,16 @@ jobs:
         grep -q '^CONFIG_TARGET_ROOTFS_EXT4FS=y' .config
         grep -q '^CONFIG_GRUB_IMAGES=y' .config
         grep -q '^CONFIG_GRUB_EFI_IMAGES=y' .config
-        grep -q '^CONFIG_PACKAGE_luci-app-turboacc=y' .config
-        grep -q '^CONFIG_PACKAGE_kmod-nft-fullcone=y' .config
+        ! grep -q '^CONFIG_PACKAGE_luci-app-turboacc=y' .config
+        ! grep -q '^CONFIG_PACKAGE_TURBOACC_' .config
+        test ! -d package/turboacc
+        test ! -e files/etc/uci-defaults/zz-tcp-cca
+        test ! -e files/etc/init.d/tcp-cca
+        test -f files/etc/uci-defaults/zz-sonic-fullcone
+        test -f package/network/config/firewall4/patches/001-sonic-fullcone.patch
+        test -f feeds/luci/applications/luci-app-firewall/patches/001-add-fullcone-options.patch
+        find target/linux/generic/hack-* -maxdepth 1 -name '984-add-sonic-fullcone-support.patch' -print -quit | grep -q .
+        grep -q '^CONFIG_PACKAGE_kmod-nft-offload=y' .config
         grep -q '^CONFIG_PACKAGE_kmod-tcp-bbr=y' .config
         grep -q '^CONFIG_KERNEL_DEBUG_INFO_BTF=y' .config
         grep -q '^CONFIG_KERNEL_XDP_SOCKETS=y' .config
@@ -211,3 +223,37 @@ jobs:
         body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
 
+
+    - name: Notify Telegram about build result
+      if: always()
+      continue-on-error: true
+      env:
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        BUILD_STATUS: ${{ job.status }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [[ -z "$TELEGRAM_BOT_TOKEN" || -z "$TELEGRAM_CHAT_ID" ]]; then
+          echo "::warning::Telegram secrets are not configured; skipping notification."
+          exit 0
+        fi
+
+        case "$BUILD_STATUS" in
+          success) status_text="✅ 编译成功" ;;
+          failure) status_text="❌ 编译失败" ;;
+          cancelled) status_text="⚠️ 编译已取消" ;;
+          *) status_text="ℹ️ 编译结束：$BUILD_STATUS" ;;
+        esac
+
+        message=$(printf '%s\\n\\n仓库：%s\\n工作流：OpenWrt Builder (25.12)\\n分支：%s\\n运行编号：%s\\n\\n查看详情：%s' \\
+          "$status_text" "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME" "$GITHUB_RUN_NUMBER" \\
+          "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
+
+        payload=$(jq -n --arg chat_id "$TELEGRAM_CHAT_ID" --arg text "$message" \\
+          '{chat_id: $chat_id, text: $text, disable_web_page_preview: true}')
+
+        curl --fail --silent --show-error --max-time 20 \\
+          -H "Content-Type: application/json" \\
+          -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \\
+          -d "$payload"
