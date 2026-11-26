@@ -1,0 +1,10 @@
+#!/bin/sh
+# Allow miniupnpd to create local port mappings when the WAN IPv4 is private
+# (for example, behind another router or carrier-grade NAT).
+# This does not configure port forwarding on the upstream router.
+
+uci -q get upnpd.config >/dev/null || exit 0
+uci set upnpd.config.ext_allow_private_ipv4='1'
+uci commit upnpd
+
+exit 0
