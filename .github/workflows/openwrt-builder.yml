@@ -246,7 +246,7 @@ jobs:
           *) status_text="ℹ️ 编译结束：$BUILD_STATUS" ;;
         esac
 
-        message=$(printf '%s\\n\\n仓库：%s\\n工作流：OpenWrt Builder (25.12)\\n分支：%s\\n运行编号：%s\\n\\n查看详情：%s' \\
+        message=$(printf '%s\n\n仓库：%s\n工作流：OpenWrt Builder (25.12)\n分支：%s\n运行编号：%s\n\n查看详情：%s' \\
           "$status_text" "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME" "$GITHUB_RUN_NUMBER" \\
           "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
 
