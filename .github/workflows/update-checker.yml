@@ -7,11 +7,15 @@ name: Update Checker
 
 on:
   workflow_dispatch:
-#  schedule:
-#    - cron: "0 */18 * * *"
+  schedule:
+    - cron: "0 */6 * * *"
 
 permissions:
   contents: write
+
+concurrency:
+  group: upstream-update-checker-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   REPO_URL: https://github.com/openwrt/openwrt
@@ -54,3 +58,28 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           event-type: source-code-update
+
+      - name: Notify Telegram about upstream update
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          UPSTREAM_COMMIT: ${{ steps.upstream.outputs.commit }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$TELEGRAM_BOT_TOKEN" || -z "$TELEGRAM_CHAT_ID" ]]; then
+            echo "::warning::Telegram secrets are not configured; skipping notification."
+            exit 0
+          fi
+
+          message=$(printf '🚀 OpenWrt 25.12 上游源码发现更新\\n\\n仓库：openwrt/openwrt\\n跟踪版本：%s\\nCommit：%s\\n\\n状态：已成功发送自动编译触发事件\\n工作流：%s' \\
+            "$REPO_BRANCH" "$UPSTREAM_COMMIT" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
+
+          payload=$(jq -n --arg chat_id "$TELEGRAM_CHAT_ID" --arg text "$message" \\
+            '{chat_id: $chat_id, text: $text, disable_web_page_preview: true}')
+
+          curl --fail --silent --show-error --max-time 20 \\
+            -H "Content-Type: application/json" \\
+            -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \\
+            -d "$payload"
