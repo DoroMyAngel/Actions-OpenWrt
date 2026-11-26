@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: upstream-update-checker-${{ github.ref }}
@@ -52,12 +53,21 @@ jobs:
         run: |
           printf '%s\n' "${{ steps.upstream.outputs.commit }}" > .commitHash
 
-      - name: Trigger firmware build
+      - name: Trigger OpenWrt 25.12 firmware build
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          event-type: source-code-update
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          payload=$(jq -n --arg ref "openwrt-25.12" '{ref: $ref}')
+          curl --fail --silent --show-error --max-time 20 \
+            -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/openwrt-builder.yml/dispatches" \
+            -d "$payload"
 
       - name: Notify Telegram about upstream update
         if: steps.cache.outputs.cache-hit != 'true'
@@ -73,7 +83,7 @@ jobs:
             exit 0
           fi
 
-          message=$(printf '🚀 OpenWrt 25.12 上游源码发现更新\n\n仓库：openwrt/openwrt\n跟踪版本：%s\nCommit：%s\n\n状态：已成功发送自动编译触发事件\n工作流：%s' \
+          message=$(printf '🚀 OpenWrt 25.12 上游源码发现更新\n\n仓库：openwrt/openwrt\n跟踪版本：%s\nCommit：%s\n\n状态：已触发 openwrt-25.12 分支自动编译\n工作流：%s' \
             "$REPO_BRANCH" "$UPSTREAM_COMMIT" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
 
           payload=$(jq -n --arg chat_id "$TELEGRAM_CHAT_ID" --arg text "$message" \
