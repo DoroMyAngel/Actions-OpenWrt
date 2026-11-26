@@ -120,6 +120,11 @@ jobs:
       run: |
         cd openwrt
         set -x
+        # Ensure PassWall2 APK repositories and their signing key enter the firmware overlay.
+        test -f files/etc/apk/repositories.d/customfeeds.list
+        grep -Fxq 'https://sourceforge.net/projects/openwrt-passwall-build/files/releases/packages-25.12/x86_64/passwall2/packages.adb' files/etc/apk/repositories.d/customfeeds.list
+        grep -Fxq 'https://sourceforge.net/projects/openwrt-passwall-build/files/releases/packages-25.12/x86_64/passwall_packages/packages.adb' files/etc/apk/repositories.d/customfeeds.list
+        test -f files/etc/apk/keys/openwrt-passwall-build.pem
         make defconfig
         test -f package/vlmcsd/Makefile
         grep -q '^CONFIG_PACKAGE_vlmcsd=y' .config
