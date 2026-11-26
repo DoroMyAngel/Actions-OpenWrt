@@ -7,11 +7,16 @@ name: Update Checker
 
 on:
   workflow_dispatch:
-#  schedule:
-#    - cron: "0 */18 * * *"
+  schedule:
+    # Check upstream every 6 hours (UTC).
+    - cron: "0 */6 * * *"
 
 permissions:
   contents: write
+
+concurrency:
+  group: upstream-update-checker-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   REPO_URL: https://github.com/openwrt/openwrt
@@ -20,6 +25,7 @@ env:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Get upstream commit
@@ -46,7 +52,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          printf '%s\n' "${{ steps.upstream.outputs.commit }}" > .commitHash
+          printf '%s\\n' "${{ steps.upstream.outputs.commit }}" > .commitHash
 
       - name: Trigger firmware build
         if: steps.cache.outputs.cache-hit != 'true'
