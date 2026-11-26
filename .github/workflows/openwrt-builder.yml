@@ -174,7 +174,7 @@ jobs:
         test ! -e files/etc/init.d/tcp-cca
         test -f files/etc/uci-defaults/zz-sonic-fullcone
         test -x files/etc/uci-defaults/zz-miniupnpd-ext-allow-private-ipv4
-        grep -q "ext_allow_private_ipv4=\x271\x27" files/etc/uci-defaults/zz-miniupnpd-ext-allow-private-ipv4
+        grep -Fq "ext_allow_private_ipv4='1'" files/etc/uci-defaults/zz-miniupnpd-ext-allow-private-ipv4
         test -f package/network/config/firewall4/patches/001-sonic-fullcone.patch
         test -f feeds/luci/applications/luci-app-firewall/patches/001-add-fullcone-options.patch
         test -f package/libs/libnftnl/patches/001-libnftnl-add-fullcone-expression-support.patch
