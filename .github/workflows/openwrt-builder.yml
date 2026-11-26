@@ -139,13 +139,12 @@ jobs:
         grep -q '^CONFIG_PACKAGE_kmod-tcp-bbr=y' .config
         grep -q '^CONFIG_PACKAGE_kmod-nft-offload=y' .config
         test ! -d package/turboacc
-        grep -q "form.ListValue, 'tcpcca'" feeds/luci/applications/luci-app-firewall/htdocs/luci-static/resources/view/firewall/zones.js
-        grep -q "Flow offloading type" feeds/luci/applications/luci-app-firewall/htdocs/luci-static/resources/view/firewall/zones.js
-        grep -q "firewall-runtime-status" feeds/luci/applications/luci-app-firewall/htdocs/luci-static/resources/view/firewall/zones.js
-        test -x files/usr/libexec/luci-firewall-status
-        grep -q '/usr/libexec/luci-firewall-status' feeds/luci/applications/luci-app-firewall/root/usr/share/rpcd/acl.d/luci-app-firewall.json
-        test -f files/etc/init.d/tcp-cca
-        test -f files/etc/uci-defaults/zz-tcp-cca
+        # Keep upstream LuCI firewall controls; only SONiC's Fullcone patch is added.
+        grep -q "Netfilter flow offload support" feeds/luci/applications/luci-app-firewall/htdocs/luci-static/resources/view/firewall/zones.js
+        ! grep -q "Flow offloading type" feeds/luci/applications/luci-app-firewall/htdocs/luci-static/resources/view/firewall/zones.js
+        test ! -e files/usr/libexec/luci-firewall-status
+        test ! -e files/etc/init.d/tcp-cca
+        test -f files/etc/uci-defaults/zz-sonic-fullcone
         test -f package/network/config/firewall4/patches/001-sonic-fullcone.patch
         test -f package/libs/libnftnl/patches/001-libnftnl-add-fullcone-expression-support.patch
         test -f package/network/utils/nftables/patches/002-nftables-add-fullcone-expression-support.patch
