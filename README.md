@@ -1,14 +1,15 @@
 # OpenWrt main x86_64 云编译
 
-本分支跟进 **OpenWrt 官方 `main` 开发分支**，每次构建均从官方仓库拉取最新源码；同时使用 **turboacc 最新提交**。稳定版本构建请切换到仓库的 [25.12.6 分支](https://github.com/DoroMyAngel/Actions-OpenWrt/tree/25.12.6)。
+本分支跟进 **OpenWrt 官方 `main` 开发分支**，每次构建均从官方仓库拉取最新源码。防火墙使用 OpenWrt 官方 firewall4/LuCI 实现，仅额外集成 [SONiC Fullcone](https://github.com/mufeng05/openwrt-sonic-fullcone) 补丁；不使用 TurboACC，也不移植 LEDE 的第三方防火墙界面或运行状态补丁。
 
 ## 当前构建配置
 
-- 源码：官方仓库 [openwrt/openwrt](https://github.com/openwrt/openwrt) 的 `main` 分支（不是本仓库内固定的 OpenWrt 源码快照）。
-- turboacc：每次构建从 [mufeng05/turboacc](https://github.com/mufeng05/turboacc) 的 `main` 分支获取最新脚本和补丁。
+- 源码：官方仓库 [openwrt/openwrt](https://github.com/openwrt/openwrt) 的 `main` 分支。
 - 目标：x86/64，ext4，Legacy BIOS 与 UEFI combined 磁盘镜像。
 - LuCI：包含 Web 管理界面及简体中文语言支持。
-- 内核配置：BTF、XDP sockets、BBR、Full Cone NAT、软件流量卸载及 CAKE。
+- 防火墙：OpenWrt 官方 firewall4、官方 LuCI 防火墙页面 + SONiC Fullcone 补丁。
+- NAT/加速：SONiC Fullcone、OpenWrt 原生软件流量卸载；硬件流量卸载默认关闭。
+- 内核网络功能：BBR 内核模块、CAKE。
 - 虚拟化驱动：virtio-net、virtio-blk、virtio-scsi、e1000/e1000e、AHCI、ATA。
 - 代理：PassWall2、sing-box、Xray、Hysteria、geoview、TCPing、V2Ray GeoIP/GeoSite。
 - 容器：Docker、Docker Compose、Dockerman。
@@ -20,8 +21,26 @@
 - KMS：仅编译 vlmcsd 主程序，不编译 LuCI 管理界面或其中文包。
 - 其他：procps-ng-watch、rclone，以及 FUSE/MACVLAN 内核模块。
 
+## 防火墙与 SONiC Fullcone
+
+- 防火墙规则生成、LuCI 防火墙页面和流量卸载选项均使用 OpenWrt 官方实现，不修改官方 `zones.js`。
+- SONiC 安装脚本在 feeds 安装完成后应用内核、iptables、libnftnl、nftables、firewall4/firewall3 和 LuCI Fullcone 补丁。
+- Fullcone 需要同时开启全局 `firewall.@defaults[0].fullcone='1'` 和对应 masquerading zone 的 `fullcone='1'`。首次启动脚本会为所有 `masq='1'` 的 zone 设置该选项。
+- 默认启用 OpenWrt 原生软件流量卸载，硬件流量卸载默认关闭；可在官方 LuCI 防火墙页面调整。
+- BBR 内核模块已编译，但不提供自定义 TCP CCA 防火墙选项或服务。系统默认 TCP 拥塞控制仍由内核决定（通常为 CUBIC）；需要手动切换时可使用 `sysctl`。
+
+例如，临时切换到 BBR：
+
+```sh
+modprobe tcp_bbr
+sysctl -w net.ipv4.tcp_congestion_control=bbr
+```
+
+该设置为运行时设置；如需持久化，请使用系统的 sysctl 配置。
+
 ## 第三方组件
 
+- SONiC Fullcone 补丁通过上游安装脚本集成：[mufeng05/openwrt-sonic-fullcone](https://github.com/mufeng05/openwrt-sonic-fullcone)。
 - PassWall2 feeds 使用独立 feed 配置，跟随其上游分支更新；OpenWrt 官方 feeds 继续使用本次克隆的官方 main 源码树自带配置。
 - Argon 主题固定在提交 `076355f33cd762172a67fa06ec6bd2230d9d9e09`。
 - 微信推送固定在提交 `e7d4d49b14f3755039cc236130afa7cfc65b1e09`。
@@ -36,4 +55,4 @@
 3. 点击 **Run workflow**，确认选择 `main` 分支。
 4. 成功后从本次运行的 Artifacts 下载固件；同时会创建以 `main-` 开头的 GitHub Release。
 
-本分支会跟随 OpenWrt main 和 turboacc 上游滚动更新，不能保证每次提交都能成功编译；上游内核、firewall4、nftables 或第三方补丁接口变化时，可能需要调整配置。
+本分支会跟随 OpenWrt main 和 SONiC Fullcone 上游滚动更新，不能保证每次提交都能成功编译；上游内核、firewall4、nftables 或第三方补丁接口变化时，可能需要调整配置。
