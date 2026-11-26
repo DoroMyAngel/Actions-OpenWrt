@@ -1,0 +1,26 @@
+#!/bin/sh
+# First-boot defaults for SONiC Fullcone and native OpenWrt flow offloading.
+
+# SONiC requires both the global gate and the per-zone option.
+uci -q set firewall.@defaults[0].fullcone='1'
+
+for zone in $(uci -q show firewall | sed -n 's/^firewall\.\([^=]*\)=zone$/\1/p'); do
+    if [ "$(uci -q get "firewall.$zone.masq")" = '1' ]; then
+        uci -q set "firewall.$zone.fullcone"='1'
+    fi
+done
+
+# Use OpenWrt's native software flow offloading; leave hardware offloading disabled.
+uci -q set firewall.@defaults[0].flow_offloading='1'
+uci -q set firewall.@defaults[0].flow_offloading_hw='0'
+
+# Remove settings and the service from the previous custom LEDE-derived TCP CCA UI.
+uci -q delete firewall.@defaults[0].tcpcca 2>/dev/null || true
+uci -q delete firewall.@defaults[0].tcp_cca 2>/dev/null || true
+if [ -x /etc/init.d/tcp-cca ]; then
+    /etc/init.d/tcp-cca disable 2>/dev/null || true
+    rm -f /etc/init.d/tcp-cca
+fi
+
+uci -q commit firewall
+exit 0
