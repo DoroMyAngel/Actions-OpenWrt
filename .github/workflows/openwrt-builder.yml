@@ -246,14 +246,14 @@ jobs:
           *) status_text="ℹ️ 编译结束：$BUILD_STATUS" ;;
         esac
 
-        message=$(printf '%s\n\n仓库：%s\n工作流：OpenWrt Builder (25.12)\n分支：%s\n运行编号：%s\n\n查看详情：%s' \\
-          "$status_text" "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME" "$GITHUB_RUN_NUMBER" \\
+        message=$(printf '%s\n\n仓库：%s\n工作流：OpenWrt Builder (25.12)\n分支：%s\n运行编号：%s\n\n查看详情：%s' \
+          "$status_text" "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME" "$GITHUB_RUN_NUMBER" \
           "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
 
-        payload=$(jq -n --arg chat_id "$TELEGRAM_CHAT_ID" --arg text "$message" \\
+        payload=$(jq -n --arg chat_id "$TELEGRAM_CHAT_ID" --arg text "$message" \
           '{chat_id: $chat_id, text: $text, disable_web_page_preview: true}')
 
-        curl --fail --silent --show-error --max-time 20 \\
-          -H "Content-Type: application/json" \\
-          -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \\
+        curl --fail --silent --show-error --max-time 20 \
+          -H "Content-Type: application/json" \
+          -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
           -d "$payload"
