@@ -21,6 +21,7 @@ if [ -x /etc/init.d/tcp-cca ]; then
     /etc/init.d/tcp-cca disable 2>/dev/null || true
     rm -f /etc/init.d/tcp-cca
 fi
+rm -f /etc/rc.d/S99tcp-cca /etc/rc.d/K10tcp-cca
 
 uci -q commit firewall
 exit 0
