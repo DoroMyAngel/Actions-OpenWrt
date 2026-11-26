@@ -52,7 +52,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          printf '%s\\n' "${{ steps.upstream.outputs.commit }}" > .commitHash
+          printf '%s\n' "${{ steps.upstream.outputs.commit }}" > .commitHash
 
       - name: Trigger firmware build
         if: steps.cache.outputs.cache-hit != 'true'
