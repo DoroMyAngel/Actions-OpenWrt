@@ -6,7 +6,7 @@
 
 - 源码：官方仓库 [openwrt/openwrt](https://github.com/openwrt/openwrt) 的 `main` 分支。
 - 目标：x86/64，ext4，Legacy BIOS 与 UEFI combined 磁盘镜像。
-- LuCI：使用 OpenWrt 官方 `luci-nginx` 集合，由 Nginx 提供 Web 服务，通过 uWSGI 连接 LuCI；不安装 uhttpd。保留 Argon 主题及简体中文语言支持。
+- LuCI：使用 OpenWrt 官方 `luci-nginx` 集合，由完整功能版 Nginx（`nginx-full`）提供 Web 服务，通过 uWSGI 连接 LuCI；不安装 uhttpd。保留 Argon 主题及简体中文语言支持。
 - 防火墙：OpenWrt 官方 firewall4、官方 LuCI 防火墙页面 + SONiC Fullcone 补丁。
 - NAT/加速：SONiC Fullcone、OpenWrt 原生软件流量卸载；硬件流量卸载默认关闭。
 - 内核网络功能：BBR 内核模块、CAKE。
@@ -23,7 +23,7 @@
 
 ## 防火墙与 SONiC Fullcone
 
-- Web 管理：使用 OpenWrt 官方 Nginx + uWSGI + LuCI 集成，不使用 uhttpd。
+- Web 管理：使用 OpenWrt 官方 `nginx-full` + uWSGI + LuCI 集成，不使用 `nginx-ssl` 或 uhttpd。
 - 防火墙规则生成、LuCI 防火墙页面和流量卸载选项均使用 OpenWrt 官方实现，不修改官方 `zones.js`。
 - SONiC 安装脚本在 feeds 安装完成后应用内核、iptables、libnftnl、nftables、firewall4/firewall3 和 LuCI Fullcone 补丁。
 - Fullcone 需要同时开启全局 `firewall.@defaults[0].fullcone='1'` 和对应 masquerading zone 的 `fullcone='1'`。首次启动脚本会为所有 `masq='1'` 的 zone 设置该选项。
