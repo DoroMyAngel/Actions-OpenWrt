@@ -146,6 +146,7 @@ jobs:
         test ! -e files/etc/init.d/tcp-cca
         test -f files/etc/uci-defaults/zz-sonic-fullcone
         test -f package/network/config/firewall4/patches/001-sonic-fullcone.patch
+        test -f feeds/luci/applications/luci-app-firewall/patches/001-add-fullcone-options.patch
         test -f package/libs/libnftnl/patches/001-libnftnl-add-fullcone-expression-support.patch
         test -f package/network/utils/nftables/patches/002-nftables-add-fullcone-expression-support.patch
         find target/linux/generic/hack-* -maxdepth 1 -name '984-add-sonic-fullcone-support.patch' -print -quit | grep -q .
