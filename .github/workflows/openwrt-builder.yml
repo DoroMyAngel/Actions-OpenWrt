@@ -192,7 +192,7 @@ jobs:
           kmod-sched-cake luci-theme-argon \
           luci-app-wechatpush luci-app-wol etherwake vlmcsd qemu-ga \
           procps-ng-watch rclone luci-app-ttyd luci-i18n-ttyd-zh-cn \
-          kmod-fuse kmod-macvlan
+          kmod-fuse kmod-macvlan kmod-netlink-diag
         do
           grep -q "^CONFIG_PACKAGE_${pkg}=y" .config || { echo "ERROR: requested package not selected: ${pkg}"; exit 1; }
         done
