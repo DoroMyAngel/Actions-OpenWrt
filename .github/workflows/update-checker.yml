@@ -90,13 +90,15 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           event-type: source-code-update
 
-      - name: Notify Telegram about kernel update
+      - name: Notify Telegram about upstream update
         if: steps.cache.outputs.cache-hit != 'true'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          KERNEL_VERSION: ${{ steps.upstream.outputs.kernel_version }}
+          OPENWRT_SERIES: "main"
+          UPSTREAM_VERSION: ${{ steps.upstream.outputs.kernel_version }}
           UPSTREAM_COMMIT: ${{ steps.upstream.outputs.commit }}
+          SOURCE_BRANCH: "main"
         shell: bash
         run: |
           set -euo pipefail
@@ -105,8 +107,15 @@ jobs:
             exit 0
           fi
 
-          message=$(printf '🚀 OpenWrt Linux 内核版本发现更新\n\n仓库：openwrt/openwrt\n分支：%s\n内核版本：%s\nCommit：%s\n\n状态：已成功发送自动编译触发事件\n工作流：%s' \
-            "$REPO_BRANCH" "$KERNEL_VERSION" "$UPSTREAM_COMMIT" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
+          if [[ "$OPENWRT_SERIES" == "main" ]]; then
+            version_label="内核版本"
+          else
+            version_label="稳定版本"
+          fi
+
+          message=$(printf '🚀 OpenWrt 上游更新通知\n\n状态：已检测到更新并触发自动编译\n仓库：%s\n源码系列：%s\n%s：%s\n上游 Commit：%s\n配置分支：%s\n工作流：Update Checker\n运行编号：%s\n\n运行链接：%s' \
+            "openwrt/openwrt" "$OPENWRT_SERIES" "$version_label" "$UPSTREAM_VERSION" "$UPSTREAM_COMMIT" "$SOURCE_BRANCH" "$GITHUB_RUN_NUMBER" \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
 
           payload=$(jq -n --arg chat_id "$TELEGRAM_CHAT_ID" --arg text "$message" \
             '{chat_id: $chat_id, text: $text, disable_web_page_preview: true}')
