@@ -223,22 +223,17 @@ jobs:
 
     - name: Compile the firmware
       id: compile
+      env:
+        SOURCE_REF: ${{ steps.source.outputs.source_ref }}
       run: |
         cd openwrt
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 || make -j1 V=s
         echo "status=success" >> $GITHUB_OUTPUT
-        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
-        # Prefer the version configured in .config; otherwise use the upstream branch default.
-        release_version="$(sed -nE 's/^CONFIG_VERSION_NUMBER="([^"]+)".*/\1/p' .config | head -n1)"
-        if [[ -z "$release_version" ]]; then
-          release_version="$(sed -nE 's/^VERSION_NUMBER:=\$\(if \$\(VERSION_NUMBER\),\$\(VERSION_NUMBER\),([^)]*)\).*/\1/p' include/version.mk | head -n1)"
-        fi
-        if [[ -z "$release_version" ]]; then
-          echo "::error::Unable to determine the OpenWrt version from the compiled configuration"
-          exit 1
-        fi
+        # Use the exact stable tag selected by the checker/builder as the release version.
+        release_version="${SOURCE_REF#v}"
         echo "RELEASE_VERSION=$release_version" >> "$GITHUB_ENV"
         echo "Firmware release version: $release_version"
 
