@@ -200,8 +200,8 @@ jobs:
         if [[ -z "$release_version" ]]; then
           release_version="$(sed -nE 's/^VERSION_NUMBER:=\$\(if \$\(VERSION_NUMBER\),\$\(VERSION_NUMBER\),([^)]*)\).*/\1/p' include/version.mk | head -n1)"
         fi
-        if [[ -z "$release_version" || "$release_version" == *SNAPSHOT* ]]; then
-          echo "::error::Unable to determine a finalized OpenWrt release version from the compiled configuration (got: ${release_version:-empty})"
+        if [[ -z "$release_version" ]]; then
+          echo "::error::Unable to determine the OpenWrt version from the compiled configuration"
           exit 1
         fi
         echo "RELEASE_VERSION=$release_version" >> "$GITHUB_ENV"
