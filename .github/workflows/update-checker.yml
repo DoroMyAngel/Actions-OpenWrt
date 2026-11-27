@@ -1,6 +1,6 @@
 #
-# Official OpenWrt source update checker
-# Checks the selected ref in https://github.com/openwrt/openwrt
+# OpenWrt kernel version update checker
+# Checks the active x86_64 kernel version in https://github.com/openwrt/openwrt
 #
 
 name: Update Checker
@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Get upstream commit
+      - name: Get upstream kernel version
         id: upstream
         shell: bash
         run: |
@@ -37,22 +37,40 @@ jobs:
           git -C upstream remote add origin "$REPO_URL"
           git -C upstream fetch --depth=1 origin "$REPO_BRANCH"
           commit="$(git -C upstream rev-parse FETCH_HEAD)"
+
+          # Resolve the kernel patch series selected by the x86 target,
+          # then read its full version (including the .x patch component).
+          patchver="$(sed -nE 's/^[[:space:]]*KERNEL_PATCHVER[[:space:]]*[:?+]?=[[:space:]]*([^[:space:]#]+).*/\1/p' upstream/target/linux/x86/Makefile | head -n1)"
+          if [[ -z "$patchver" ]]; then
+            echo "::error::Unable to determine KERNEL_PATCHVER from target/linux/x86/Makefile"
+            exit 1
+          fi
+
+          kernel_version="$(sed -nE "s/^[[:space:]]*LINUX_VERSION-${patchver}[[:space:]]*[:?+]?=[[:space:]]*([^[:space:]#]+).*/\1/p" upstream/include/kernel-version.mk | head -n1)"
+          if [[ -z "$kernel_version" ]]; then
+            echo "::error::Unable to resolve Linux kernel version for patch series ${patchver}"
+            exit 1
+          fi
+
           echo "commit=$commit" >> "$GITHUB_OUTPUT"
-          echo "Official OpenWrt ref: $REPO_BRANCH"
+          echo "kernel_version=$kernel_version" >> "$GITHUB_OUTPUT"
+          echo "OpenWrt ref: $REPO_BRANCH"
+          echo "x86 KERNEL_PATCHVER: $patchver"
+          echo "Linux kernel version: $kernel_version"
           echo "Commit: $commit"
 
-      - name: Compare upstream commit
+      - name: Compare upstream kernel version
         id: cache
         uses: actions/cache@v4
         with:
-          path: .commitHash
-          key: openwrt-${{ env.REPO_BRANCH }}-${{ steps.upstream.outputs.commit }}
+          path: .kernelVersion
+          key: openwrt-x86_64-kernel-${{ steps.upstream.outputs.kernel_version }}
 
-      - name: Save new commit hash
+      - name: Save new kernel version
         if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          printf '%s\n' "${{ steps.upstream.outputs.commit }}" > .commitHash
+          printf '%s\n' "${{ steps.upstream.outputs.kernel_version }}" > .kernelVersion
 
       - name: Trigger firmware build
         if: steps.cache.outputs.cache-hit != 'true'
@@ -61,11 +79,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           event-type: source-code-update
 
-      - name: Notify Telegram about upstream update
+      - name: Notify Telegram about kernel update
         if: steps.cache.outputs.cache-hit != 'true'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          KERNEL_VERSION: ${{ steps.upstream.outputs.kernel_version }}
           UPSTREAM_COMMIT: ${{ steps.upstream.outputs.commit }}
         shell: bash
         run: |
@@ -75,8 +94,8 @@ jobs:
             exit 0
           fi
 
-          message=$(printf '🚀 OpenWrt 上游源码发现更新\n\n仓库：openwrt/openwrt\n分支：%s\nCommit：%s\n\n状态：已成功发送自动编译触发事件\n工作流：%s' \
-            "$REPO_BRANCH" "$UPSTREAM_COMMIT" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
+          message=$(printf '🚀 OpenWrt Linux 内核版本发现更新\n\n仓库：openwrt/openwrt\n分支：%s\n内核版本：%s\nCommit：%s\n\n状态：已成功发送自动编译触发事件\n工作流：%s' \
+            "$REPO_BRANCH" "$KERNEL_VERSION" "$UPSTREAM_COMMIT" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
 
           payload=$(jq -n --arg chat_id "$TELEGRAM_CHAT_ID" --arg text "$message" \
             '{chat_id: $chat_id, text: $text, disable_web_page_preview: true}')
