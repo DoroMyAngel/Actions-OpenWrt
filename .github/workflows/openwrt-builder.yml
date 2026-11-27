@@ -108,13 +108,13 @@ jobs:
     - name: Install feeds
       run: cd openwrt && ./scripts/feeds install -a
 
-    - name: Add Argon theme package
+    - name: Add latest Argon theme package
       run: |
-        ARGON_COMMIT=076355f33cd762172a67fa06ec6bd2230d9d9e09
-        git clone https://github.com/jerrykuku/luci-theme-argon.git /tmp/luci-theme-argon
-        git -C /tmp/luci-theme-argon checkout --detach "$ARGON_COMMIT"
+        git clone --depth 1 https://github.com/jerrykuku/luci-theme-argon.git /tmp/luci-theme-argon
+        ARGON_COMMIT="$(git -C /tmp/luci-theme-argon rev-parse HEAD)"
+        echo "Argon upstream commit: $ARGON_COMMIT"
         mkdir -p openwrt/package/luci-theme-argon
-        git -C /tmp/luci-theme-argon archive "$ARGON_COMMIT" | tar -x -C openwrt/package/luci-theme-argon
+        git -C /tmp/luci-theme-argon archive HEAD | tar -x -C openwrt/package/luci-theme-argon
         test -f openwrt/package/luci-theme-argon/Makefile
 
     - name: Exclude unused WeeChat LuCI package
@@ -126,13 +126,13 @@ jobs:
           exit 1
         fi
 
-    - name: Add WeChat Push package
+    - name: Add latest WeChat Push package
       run: |
-        WECHATPUSH_COMMIT=e7d4d49b14f3755039cc236130afa7cfc65b1e09
-        git clone https://github.com/tty228/luci-app-wechatpush.git /tmp/luci-app-wechatpush
-        git -C /tmp/luci-app-wechatpush checkout --detach "$WECHATPUSH_COMMIT"
+        git clone --depth 1 https://github.com/tty228/luci-app-wechatpush.git /tmp/luci-app-wechatpush
+        WECHATPUSH_COMMIT="$(git -C /tmp/luci-app-wechatpush rev-parse HEAD)"
+        echo "WeChat Push upstream commit: $WECHATPUSH_COMMIT"
         mkdir -p openwrt/package/luci-app-wechatpush
-        git -C /tmp/luci-app-wechatpush archive "$WECHATPUSH_COMMIT" | tar -x -C openwrt/package/luci-app-wechatpush
+        git -C /tmp/luci-app-wechatpush archive HEAD | tar -x -C openwrt/package/luci-app-wechatpush
         test -f openwrt/package/luci-app-wechatpush/Makefile
         test -f openwrt/package/luci-app-wechatpush/po/zh_Hans/wechatpush.po
 
