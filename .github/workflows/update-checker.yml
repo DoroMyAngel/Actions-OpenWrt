@@ -36,7 +36,10 @@ jobs:
           git init upstream
           git -C upstream remote add origin "$REPO_URL"
           git -C upstream fetch --depth=1 origin "$REPO_BRANCH"
-          commit="$(git -C upstream rev-parse FETCH_HEAD)"
+          # Fetch updates FETCH_HEAD but does not populate the working tree.
+          # Check out the fetched commit before reading source files below.
+          git -C upstream checkout --detach FETCH_HEAD
+          commit="$(git -C upstream rev-parse HEAD)"
 
           # Resolve the kernel patch series selected by the x86 target,
           # then read its full version (including the .x patch component).
