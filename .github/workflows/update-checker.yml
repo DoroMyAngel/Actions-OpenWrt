@@ -1,6 +1,6 @@
 #
-# Official OpenWrt source update checker
-# Checks the selected ref in https://github.com/openwrt/openwrt
+# Official OpenWrt 25.12 stable release checker
+# Tracks the newest official v25.12.x stable tag, excluding snapshots and prereleases.
 #
 
 name: Update Checker
@@ -20,47 +20,65 @@ concurrency:
 
 env:
   REPO_URL: https://github.com/openwrt/openwrt
-  REPO_BRANCH: v25.12.6
+  RELEASE_SERIES: "25.12"
 
 jobs:
   check:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get upstream commit
+      - name: Get latest stable release
         id: upstream
         shell: bash
         run: |
           set -euo pipefail
+
           git init upstream
           git -C upstream remote add origin "$REPO_URL"
-          git -C upstream fetch --depth=1 origin "$REPO_BRANCH"
-          commit="$(git -C upstream rev-parse FETCH_HEAD)"
+
+          latest_tag="$(
+            git ls-remote --tags --refs "$REPO_URL" "refs/tags/v${RELEASE_SERIES}.*" |
+              awk '{ sub("refs/tags/", "", $2); if ($2 ~ /^v25\.12\.[0-9]+$/) print $2 }' |
+              sort -V |
+              tail -n1
+          )"
+
+          if [[ -z "$latest_tag" ]]; then
+            echo "::error::No official stable tag found for OpenWrt ${RELEASE_SERIES}"
+            exit 1
+          fi
+
+          git -C upstream fetch --depth=1 origin "refs/tags/$latest_tag:refs/tags/$latest_tag"
+          commit="$(git -C upstream rev-parse "$latest_tag^{commit}")"
+
+          echo "stable_tag=$latest_tag" >> "$GITHUB_OUTPUT"
           echo "commit=$commit" >> "$GITHUB_OUTPUT"
-          echo "Official OpenWrt ref: $REPO_BRANCH"
+          echo "Latest official stable release: $latest_tag"
           echo "Commit: $commit"
 
-      - name: Compare upstream commit
+      - name: Compare upstream stable release
         id: cache
         uses: actions/cache@v4
         with:
           path: .commitHash
-          key: openwrt-${{ env.REPO_BRANCH }}-${{ steps.upstream.outputs.commit }}
+          key: openwrt-${{ steps.upstream.outputs.stable_tag }}-${{ steps.upstream.outputs.commit }}
 
-      - name: Save new commit hash
+      - name: Save new stable release
         if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
           printf '%s\n' "${{ steps.upstream.outputs.commit }}" > .commitHash
 
-      - name: Trigger OpenWrt 25.12 firmware build
+      - name: Trigger OpenWrt 25.12 stable firmware build
         if: steps.cache.outputs.cache-hit != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_REF: ${{ steps.upstream.outputs.stable_tag }}
         shell: bash
         run: |
           set -euo pipefail
-          payload=$(jq -n --arg ref "openwrt-25.12" '{ref: $ref}')
+          payload=$(jq -n --arg ref "openwrt-25.12" --arg source_ref "$SOURCE_REF" \
+            '{ref: $ref, inputs: {source_ref: $source_ref}}')
           curl --fail --silent --show-error --max-time 20 \
             -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
@@ -69,11 +87,12 @@ jobs:
             "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/openwrt-builder.yml/dispatches" \
             -d "$payload"
 
-      - name: Notify Telegram about upstream update
+      - name: Notify Telegram about upstream stable release
         if: steps.cache.outputs.cache-hit != 'true'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          UPSTREAM_TAG: ${{ steps.upstream.outputs.stable_tag }}
           UPSTREAM_COMMIT: ${{ steps.upstream.outputs.commit }}
         shell: bash
         run: |
@@ -83,8 +102,8 @@ jobs:
             exit 0
           fi
 
-          message=$(printf '🚀 OpenWrt 25.12 上游源码发现更新\n\n仓库：openwrt/openwrt\n跟踪版本：%s\nCommit：%s\n\n状态：已触发 openwrt-25.12 分支自动编译\n工作流：%s' \
-            "$REPO_BRANCH" "$UPSTREAM_COMMIT" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
+          message=$(printf '🚀 OpenWrt 25.12 发布了新的正式稳定版\n\n仓库：openwrt/openwrt\n稳定版本：%s\nCommit：%s\n\n状态：已触发对应稳定版源码的自动编译\n工作流：%s' \
+            "$UPSTREAM_TAG" "$UPSTREAM_COMMIT" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
 
           payload=$(jq -n --arg chat_id "$TELEGRAM_CHAT_ID" --arg text "$message" \
             '{chat_id: $chat_id, text: $text, disable_web_page_preview: true}')
