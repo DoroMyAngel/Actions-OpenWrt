@@ -87,13 +87,15 @@ jobs:
             "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/openwrt-builder.yml/dispatches" \
             -d "$payload"
 
-      - name: Notify Telegram about upstream stable release
+      - name: Notify Telegram about upstream update
         if: steps.cache.outputs.cache-hit != 'true'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          UPSTREAM_TAG: ${{ steps.upstream.outputs.stable_tag }}
+          OPENWRT_SERIES: "25.12"
+          UPSTREAM_VERSION: ${{ steps.upstream.outputs.stable_tag }}
           UPSTREAM_COMMIT: ${{ steps.upstream.outputs.commit }}
+          SOURCE_BRANCH: "openwrt-25.12"
         shell: bash
         run: |
           set -euo pipefail
@@ -102,8 +104,15 @@ jobs:
             exit 0
           fi
 
-          message=$(printf '🚀 OpenWrt 25.12 发布了新的正式稳定版\n\n仓库：openwrt/openwrt\n稳定版本：%s\nCommit：%s\n\n状态：已触发对应稳定版源码的自动编译\n工作流：%s' \
-            "$UPSTREAM_TAG" "$UPSTREAM_COMMIT" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
+          if [[ "$OPENWRT_SERIES" == "main" ]]; then
+            version_label="内核版本"
+          else
+            version_label="稳定版本"
+          fi
+
+          message=$(printf '🚀 OpenWrt 上游更新通知\n\n状态：已检测到更新并触发自动编译\n仓库：%s\n源码系列：%s\n%s：%s\n上游 Commit：%s\n配置分支：%s\n工作流：Update Checker\n运行编号：%s\n\n运行链接：%s' \
+            "openwrt/openwrt" "$OPENWRT_SERIES" "$version_label" "$UPSTREAM_VERSION" "$UPSTREAM_COMMIT" "$SOURCE_BRANCH" "$GITHUB_RUN_NUMBER" \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
 
           payload=$(jq -n --arg chat_id "$TELEGRAM_CHAT_ID" --arg text "$message" \
             '{chat_id: $chat_id, text: $text, disable_web_page_preview: true}')
