@@ -58,12 +58,14 @@ sysctl -w net.ipv4.tcp_congestion_control=bbr
 
 - OpenWrt 官方 feeds 使用本次克隆的官方 `main` 源码树自带配置。
 - PassWall2 及其依赖 feeds 使用仓库配置的独立 feed 来源。
+- [PassWall2（openwrt-passwall2）](https://github.com/xiaorouji/openwrt-passwall2)：PassWall2 LuCI 应用及相关组件。
+- [PassWall packages（openwrt-passwall-packages）](https://github.com/xiaorouji/openwrt-passwall-packages)：PassWall2 所需的配套软件包。
+- [Argon 主题（luci-theme-argon）](https://github.com/jerrykuku/luci-theme-argon)：每次编译时克隆上游默认分支最新代码。
+- [微信推送（luci-app-wechatpush）](https://github.com/tty228/luci-app-wechatpush)：每次编译时克隆上游默认分支最新代码。
 - [SONiC Fullcone](https://github.com/mufeng05/openwrt-sonic-fullcone) 补丁通过上游安装脚本集成。
-- Argon 主题固定在提交 `076355f33cd762172a67fa06ec6bd2230d9d9e09`。
-- 微信推送固定在提交 `e7d4d49b14f3755039cc236130afa7cfc65b1e09`。
 - vlmcsd 软件包定义及配置保存在本仓库 `package/vlmcsd`，上游源码固定在 `Wind4/vlmcsd` 提交 `e599080486478e219cd065e141d6de050a450c27`。
 
-第三方 feeds、软件包与 OpenWrt main 的兼容性会随上游变化。工作流会在下载前检查关键软件包是否仍被选中；若包名或 feed 不兼容则提前失败。内核模块必须与本次固件使用同一套内核构建结果，不要从其他版本单独复制安装。
+Argon 和微信推送不再固定到某个历史 Commit；构建日志会记录本次实际使用的上游 Commit SHA。PassWall2 feeds 按工作流配置的来源和分支检出。第三方 feeds、软件包与 OpenWrt main 的兼容性会随上游变化。工作流会在下载前检查关键软件包是否仍被选中；若包名或 feed 不兼容则提前失败。内核模块必须与本次固件使用同一套内核构建结果，不要从其他版本单独复制安装。
 
 ## 手动编译与自动编译
 
@@ -84,11 +86,16 @@ sysctl -w net.ipv4.tcp_congestion_control=bbr
 
 - 本分支跟随 OpenWrt main 和第三方 feeds 滚动更新，不保证每次上游提交都能成功编译。
 - 上游内核、firewall4、nftables、LuCI 或第三方补丁接口变化时，可能需要调整配置或补丁。
+- Argon 和微信推送跟随上游最新代码，最新提交可能引入兼容性变化；编译成功也不代表运行时功能一定正常。
 - 软件包能通过编译前检查不代表运行时功能一定正常；升级后应检查 Web 管理、防火墙、代理和网络连通性。
 - 内核模块必须与固件所用内核版本及配置匹配。
 
 ## 上游项目与致谢
 
 - [OpenWrt](https://github.com/openwrt/openwrt)
+- [PassWall2](https://github.com/xiaorouji/openwrt-passwall2)
+- [PassWall packages](https://github.com/xiaorouji/openwrt-passwall-packages)
+- [Argon](https://github.com/jerrykuku/luci-theme-argon)
+- [WeChat Push](https://github.com/tty228/luci-app-wechatpush)
 - [SONiC Fullcone](https://github.com/mufeng05/openwrt-sonic-fullcone)
 - [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)
