@@ -18,10 +18,16 @@ permissions:
 on:
   repository_dispatch:
   workflow_dispatch:
+    inputs:
+      source_ref:
+        description: "Official OpenWrt 25.12 stable tag (leave empty to use the latest)"
+        required: false
+        type: string
+        default: ""
 
 env:
   REPO_URL: https://github.com/openwrt/openwrt
-  REPO_BRANCH: openwrt-25.12
+  RELEASE_SERIES: "25.12"
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
   DIY_P1_SH: diy-part1.sh
@@ -39,6 +45,32 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    - name: Resolve official stable release
+      id: source
+      env:
+        REQUESTED_SOURCE_REF: ${{ inputs.source_ref }}
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        source_ref="$REQUESTED_SOURCE_REF"
+        if [[ -z "$source_ref" ]]; then
+          source_ref="$(
+            git ls-remote --tags --refs "$REPO_URL" "refs/tags/v${RELEASE_SERIES}.*" |
+              awk '{ sub("refs/tags/", "", $2); if ($2 ~ /^v25\\.12\\.[0-9]+$/) print $2 }' |
+              sort -V |
+              tail -n1
+          )"
+        fi
+
+        if [[ ! "$source_ref" =~ ^v25\\.12\\.[0-9]+$ ]]; then
+          echo "::error::Invalid OpenWrt 25.12 stable tag: $source_ref"
+          exit 1
+        fi
+
+        echo "source_ref=$source_ref" >> "$GITHUB_OUTPUT"
+        echo "Building official stable release: $source_ref"
+
     - name: Initialization environment
       env:
         DEBIAN_FRONTEND: noninteractive
@@ -55,9 +87,12 @@ jobs:
 
     - name: Clone source code
       working-directory: /workdir
+      env:
+        SOURCE_REF: ${{ steps.source.outputs.source_ref }}
       run: |
         df -hT $PWD
-        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        git clone --depth 1 --branch "$SOURCE_REF" "$REPO_URL" openwrt
+        test "$(git -C openwrt describe --tags --exact-match)" = "$SOURCE_REF"
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
     - name: Load custom feeds
