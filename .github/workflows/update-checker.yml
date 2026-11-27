@@ -33,7 +33,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git init upstream
+          git init -b main upstream
           git -C upstream remote add origin "$REPO_URL"
           git -C upstream fetch --depth=1 origin "$REPO_BRANCH"
           # Fetch updates FETCH_HEAD but does not populate the working tree.
@@ -41,20 +41,28 @@ jobs:
           git -C upstream checkout --detach FETCH_HEAD
           commit="$(git -C upstream rev-parse HEAD)"
 
-          # Resolve the kernel patch series selected by the x86 target,
-          # then read its full version (including the .x patch component).
+          # Resolve the kernel patch series selected by the x86 target.
           patchver="$(sed -nE 's/^[[:space:]]*KERNEL_PATCHVER[[:space:]]*[:?+]?=[[:space:]]*([^[:space:]#]+).*/\1/p' upstream/target/linux/x86/Makefile | head -n1)"
           if [[ -z "$patchver" ]]; then
             echo "::error::Unable to determine KERNEL_PATCHVER from target/linux/x86/Makefile"
             exit 1
           fi
 
-          kernel_version="$(sed -nE "s/^[[:space:]]*LINUX_VERSION-${patchver}[[:space:]]*[:?+]?=[[:space:]]*([^[:space:]#]+).*/\1/p" upstream/include/kernel-version.mk | head -n1)"
-          if [[ -z "$kernel_version" ]]; then
-            echo "::error::Unable to resolve Linux kernel version for patch series ${patchver}"
+          # The full kernel version suffix is defined in the per-series
+          # target/linux/generic/kernel-<patchver> file, not kernel-version.mk.
+          kernel_details="upstream/target/linux/generic/kernel-${patchver}"
+          if [[ ! -f "$kernel_details" ]]; then
+            echo "::error::Kernel details file not found: ${kernel_details}"
             exit 1
           fi
 
+          kernel_suffix="$(awk -v key="LINUX_VERSION-${patchver}" '$1 == key && $2 == "=" {print $3; exit}' "$kernel_details")"
+          if [[ -z "$kernel_suffix" ]]; then
+            echo "::error::Unable to resolve Linux kernel version for patch series ${patchver} from ${kernel_details}"
+            exit 1
+          fi
+
+          kernel_version="${patchver}${kernel_suffix}"
           echo "commit=$commit" >> "$GITHUB_OUTPUT"
           echo "kernel_version=$kernel_version" >> "$GITHUB_OUTPUT"
           echo "OpenWrt ref: $REPO_BRANCH"
