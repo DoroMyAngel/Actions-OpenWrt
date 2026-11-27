@@ -279,6 +279,8 @@ jobs:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         BUILD_STATUS: ${{ job.status }}
+        OPENWRT_SERIES: "main"
+        SOURCE_VERSION: ${{ env.RELEASE_VERSION }}
       shell: bash
       run: |
         set -euo pipefail
@@ -294,8 +296,9 @@ jobs:
           *) status_text="ℹ️ 编译结束：$BUILD_STATUS" ;;
         esac
 
-        message=$(printf '%s\n\n仓库：%s\n工作流：OpenWrt Builder\n分支：%s\n运行编号：%s\n\n查看详情：%s' \
-          "$status_text" "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME" "$GITHUB_RUN_NUMBER" \
+        source_version="${SOURCE_VERSION:-未完成版本识别}"
+        message=$(printf '📦 OpenWrt 固件编译结果\n\n状态：%s\n仓库：%s\n源码系列：%s\n源码版本：%s\n配置分支：%s\n工作流：OpenWrt Builder\n运行编号：%s\n\n运行链接：%s' \
+          "$status_text" "$GITHUB_REPOSITORY" "$OPENWRT_SERIES" "$source_version" "$GITHUB_REF_NAME" "$GITHUB_RUN_NUMBER" \
           "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
 
         payload=$(jq -n --arg chat_id "$TELEGRAM_CHAT_ID" --arg text "$message" \
