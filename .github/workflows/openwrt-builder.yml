@@ -175,6 +175,16 @@ jobs:
         grep -Fxq 'https://sourceforge.net/projects/openwrt-passwall-build/files/releases/packages-25.12/x86_64/passwall_packages/packages.adb' files/etc/apk/repositories.d/customfeeds.list
         test -f files/etc/apk/keys/openwrt-passwall-build.pem
         make defconfig
+        # Enforce the same Nginx-based LuCI variant as the main branch.
+        grep -q '^CONFIG_PACKAGE_luci-nginx=y' .config
+        ! grep -q '^CONFIG_PACKAGE_luci=y' .config
+        ! grep -q '^CONFIG_PACKAGE_luci-ssl=y' .config
+        grep -q '^CONFIG_PACKAGE_nginx-full=y' .config
+        ! grep -q '^CONFIG_PACKAGE_nginx-ssl=y' .config
+        grep -q '^CONFIG_PACKAGE_nginx-mod-luci=y' .config
+        grep -q '^CONFIG_PACKAGE_nginx-mod-ubus=y' .config
+        grep -q '^CONFIG_PACKAGE_uwsgi-luci-support=y' .config
+        ! grep -q '^CONFIG_PACKAGE_uhttpd[^=]*=y' .config
         test -f package/vlmcsd/Makefile
         grep -q '^CONFIG_PACKAGE_vlmcsd=y' .config
         grep -q '^CONFIG_PACKAGE_luci-app-wechatpush=y' .config
@@ -204,13 +214,13 @@ jobs:
 
         # Fail early if a requested package is missing from the configured feeds.
         for pkg in \
-          luci-app-passwall2 sing-box xray-core hysteria \
+          luci-app-passwall2 sing-box xray-core hysteria miniupnpd-nftables \
           docker dockerd docker-compose luci-app-dockerman \
           cloudflared luci-app-cloudflared ddns-scripts-cloudflare luci-app-ddns \
           acme-acmesh acme-acmesh-dnsapi luci-app-acme frpc luci-app-frpc zerotier \
           netdata nlbwmon luci-app-nlbwmon \
           iperf3-ssl tcpdump nmap bind-host smartmontools ethtool-full \
-          kmod-sched-cake luci-theme-argon \
+          kmod-sched-cake kmod-netlink-diag luci-theme-argon \
           luci-app-wechatpush luci-app-wol etherwake vlmcsd qemu-ga
         do
           grep -q "^CONFIG_PACKAGE_${pkg}=y" .config || { echo "ERROR: requested package not selected: ${pkg}"; exit 1; }
