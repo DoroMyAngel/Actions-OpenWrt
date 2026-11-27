@@ -57,13 +57,13 @@ jobs:
         if [[ -z "$source_ref" ]]; then
           source_ref="$(
             git ls-remote --tags --refs "$REPO_URL" "refs/tags/v${RELEASE_SERIES}.*" |
-              awk '{ sub("refs/tags/", "", $2); if ($2 ~ /^v25\\.12\\.[0-9]+$/) print $2 }' |
+              awk '{ sub("refs/tags/", "", $2); if ($2 ~ /^v25\.12\.[0-9]+$/) print $2 }' |
               sort -V |
               tail -n1
           )"
         fi
 
-        if [[ ! "$source_ref" =~ ^v25\\.12\\.[0-9]+$ ]]; then
+        if [[ ! "$source_ref" =~ ^v25\.12\.[0-9]+$ ]]; then
           echo "::error::Invalid OpenWrt 25.12 stable tag: $source_ref"
           exit 1
         fi
