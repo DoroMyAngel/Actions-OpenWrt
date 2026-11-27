@@ -214,7 +214,16 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
-        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+        # Use the effective x86 kernel version selected by this build.
+        patchver="$(sed -nE 's/^[[:space:]]*KERNEL_PATCHVER[[:space:]]*[:?+]?=[[:space:]]*([^[:space:]#]+).*/\1/p' target/linux/x86/Makefile | head -n1)"
+        kernel_suffix="$(awk -v key="LINUX_VERSION-$patchver" '$1 == key && $2 == "=" {print $3; exit}' "target/linux/generic/kernel-$patchver")"
+        if [[ -z "$patchver" || -z "$kernel_suffix" ]]; then
+          echo "::error::Unable to determine the effective x86 kernel version"
+          exit 1
+        fi
+        kernel_version="${patchver}${kernel_suffix}"
+        echo "RELEASE_VERSION=snapshot-${kernel_version}" >> "$GITHUB_ENV"
+        echo "Firmware release version: snapshot-${kernel_version}"
 
     - name: Check space usage
       if: (!cancelled())
@@ -224,7 +233,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
-        name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: OpenWrt_bin_${{ env.RELEASE_VERSION }}${{ env.DEVICE_NAME }}
         path: openwrt/bin
 
     - name: Organize files
@@ -240,16 +249,16 @@ jobs:
       uses: actions/upload-artifact@v4
       if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
-        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: OpenWrt_firmware_${{ env.RELEASE_VERSION }}${{ env.DEVICE_NAME }}
         path: ${{ env.FIRMWARE }}
 
     - name: Generate release tag
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && steps.organize.outputs.status == 'success' && !cancelled()
       run: |
-        echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
-        touch release.txt
-        echo "status=success" >> $GITHUB_OUTPUT
+        echo "release_tag=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
+        printf 'OpenWrt firmware version: %s\nBranch: %s\n' "$RELEASE_VERSION" "$GITHUB_REF_NAME" > release.txt
+        echo "status=success" >> "$GITHUB_OUTPUT"
 
     - name: Upload firmware to release
       uses: softprops/action-gh-release@v2
@@ -258,8 +267,10 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.tag.outputs.release_tag }}
+        name: OpenWrt ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
+        overwrite_files: true
 
     - name: Notify Telegram about build result
       if: always()
