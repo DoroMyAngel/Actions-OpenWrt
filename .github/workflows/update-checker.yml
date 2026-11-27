@@ -8,8 +8,8 @@ name: Update Checker
 on:
   workflow_dispatch:
   schedule:
-    # Check upstream once a week (Monday 14:00 Beijing time / 06:00 UTC).
-    - cron: "0 6 * * 1"
+    # Check upstream daily at 14:00 Beijing time (06:00 UTC).
+    - cron: "0 6 * * *"
 
 permissions:
   contents: write
